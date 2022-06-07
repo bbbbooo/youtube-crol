@@ -8,17 +8,21 @@ import os
 import time
 import pandas as pd
 import pafy as pa
+import re
 
 wb = Workbook(write_only=True)
 ws = wb.create_sheet()
 
 
-url= "https://www.youtube.com/watch?v=JYV9TZJ1beE"
+url= "https://www.youtube.com/watch?v=r76sv7QSk94"
 my_str = url.replace("https://www.youtube.com/watch?v=","")
 
 # 제목 가져오기
 videoinfo = pa.new(url)
 video_title = videoinfo.title
+
+# 제목에 특수기호 있으면 공백으로 치환
+rp_video_title = re.sub('[-=+,#/\?:^$.@*\"\'※~&%ㆍ!』\\‘|\(\)\[\]\<\>`…《\》]', '', video_title)
 
 # 크롬 드라이버 실행..
 driver = webdriver.Chrome(executable_path="chromedriver.exe")
@@ -89,9 +93,9 @@ pd_data = {"아이디" : id_final , "댓글 내용" : comment_final}
 youtube_pd = pd.DataFrame(pd_data)
 
 # 유튜브 제목으로 저장
-youtube_pd.to_excel(video_title + '.xlsx')
+youtube_pd.to_excel(rp_video_title + '.xlsx')
 
 # 중복 처리
-path = '%s.xlsx' % (video_title)
+path = '%s.xlsx' % (rp_video_title)
 if os.path.exists(path):
-    youtube_pd.to_excel('%s.xlsx' % (video_title))
+    youtube_pd.to_excel('%s.xlsx' % (rp_video_title))
