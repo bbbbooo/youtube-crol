@@ -27,7 +27,7 @@ try:
         con.caption("Result")
         con.write(f"The entered video address is {str(input_url)}")
 
-    url= ""
+    
     url=input_url
     my_str = url.replace("https://www.youtube.com/watch?v=","")
 
@@ -38,9 +38,11 @@ try:
     #제목 특수기호 있으면 공백으로 치환
     rp_video_title = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…《\》]', '', video_title)
 
-
+    #api키 입력
+    api_key = 'Your API key'
+    
     comments = list()
-    api_obj = build('youtube', 'v3', developerKey='AIzaSyDCLqtKIMyBZ82hWpUj1QcTg_glkAlk1kk')
+    api_obj = build('youtube', 'v3', developerKey=api_key)
     response = api_obj.commentThreads().list(part='snippet,replies', videoId=my_str, maxResults=100).execute()
 
     
