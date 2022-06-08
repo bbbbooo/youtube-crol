@@ -9,15 +9,7 @@ from googleapiclient.discovery import build
 import os
 import re
 import streamlit as st
-
-
-from selenium import webdriver
-import time
-from openpyxl import Workbook
-import pandas as pd
 import pafy as pa
-from selenium.webdriver.common.keys import Keys
-from bs4 import BeautifulSoup
 
 try:
     wb = Workbook(write_only=True)
