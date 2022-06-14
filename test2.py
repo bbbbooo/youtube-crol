@@ -29,9 +29,6 @@ try:
     my_str = url.replace("https://www.youtube.com/watch?v=","")
     
     
-
-    
-    
     #썸네일 출력
     def get_thumbnail(url):
         id = url
@@ -54,6 +51,8 @@ try:
         # 썸네일 출력
         st.header('Thumbnail')
         st.image(get_thumbnail(my_str))
+        
+        
         
     
     #제목 가져오기
@@ -256,23 +255,22 @@ loaded_model = load_model(PATH + 'best_model.h5')
 
 
 def sentiment_predict(new_sentence):
-  new_sentence = re.sub(r'[^ㄱ-ㅎㅏ-ㅣ가-힣 ]','', new_sentence)
-  new_sentence = okt.morphs(new_sentence, stem=True) # 토큰화
-  new_sentence = [word for word in new_sentence if not word in stopwords] # 불용어 제거
-  encoded = tokenizer.texts_to_sequences([new_sentence]) # 정수 인코딩
-  pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
-  score = float(loaded_model.predict(pad_new)) # 예측
-  
-  
-  if(score > 0.5):
-    #print(new_sentence)
-    print("{:.2f}% 확률로 긍정 리뷰입니다.\n".format(score * 100))
-    
-  else:
-    #print(new_sentence)
-    print("{:.2f}% 확률로 부정 리뷰입니다.\n".format((1 - score) * 100))
-    
-
+        new_sentence = re.sub(r'[^ㄱ-ㅎㅏ-ㅣ가-힣 ]','', str(new_sentence))
+        new_sentence = okt.morphs(new_sentence, stem=True) # 토큰화
+        new_sentence = [word for word in new_sentence if not word in stopwords] # 불용어 제거
+        encoded = tokenizer.texts_to_sequences([new_sentence]) # 정수 인코딩
+        pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
+        score = float(loaded_model.predict(pad_new)) # 예측
+        
+        if(score > 0.5):
+            print(cell)
+            print("{:.2f}% 확률로 긍정 리뷰입니다.\n".format(score * 100))
+            
+        else:
+            print(cell)
+            print("{:.2f}% 확률로 부정 리뷰입니다.\n".format((1 - score) * 100))
+          
+          
 
 filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/%s.xlsx' % rp_video_title)
 sheet = filename['comment']
@@ -281,9 +279,8 @@ sheet = filename['comment']
 for cell in sheet:
     output_sentence = str(cell)
     sentiment_predict(output_sentence)
+    
 
+#output_sentence = str(filename['comment'])
+#sentiment_predict(output_sentence)
 
-output_sentence = str(filename['comment'])
-sentiment_predict(output_sentence)
-#input_sentence = input('감성분석할 문장을 입력해 주세요 : ')
-#sentiment_predict(input_sentence)
