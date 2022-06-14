@@ -14,8 +14,8 @@ from keras.models import save_model
 
 
 #전처리 데이터 불러오기
-DATA_PATH = '/Users/82102/Desktop/project/yt_cr/test_analy/CLEAN_DATA/'
-DATA_OUT = '/Users/82102/Desktop/project/yt_cr/test_analy/DATA_OUT/'
+DATA_PATH = '/Users/82102/Desktop/project/yt_cr/study_test_analy/CLEAN_DATA/'
+DATA_OUT = '/Users/82102/Desktop/project/yt_cr/study_test_analy/DATA_OUT/'
 INPUT_TRAIN_DATA = 'nsmc_train_input.npy'
 LABEL_TRAIN_DATA = 'nsmc_train_label.npy'
 DATA_CONFIGS = 'data_configs.json'
@@ -86,7 +86,7 @@ cp_callback = ModelCheckpoint(
 history = model.fit(train_input, train_label, batch_size=BATCH_SIZE, epochs = NUM_EPOCHS,
                     validation_split=VALID_SPLIT, callbacks=[earlystop_callback, cp_callback])
 
-save_model(model, '/Users/82102/Desktop/project/yt_cr/test_analy/DATA_OUT/cnn_classifier_kr/', overwrite=True, include_optimizer=True ,save_format=None ,
+save_model(model, '/Users/82102/Desktop/project/yt_cr/study_test_analy/DATA_OUT/cnn_classifier_kr/', overwrite=True, include_optimizer=True ,save_format=None ,
            signatures=None, options=None)
 
 
@@ -100,5 +100,5 @@ test_input = np.load(open(DATA_PATH+INPUT_TEST_DATA,'rb'))
 test_input = pad_sequences(test_input,maxlen=test_input.shape[1])
 test_label_data = np.load(open(DATA_PATH + LABEL_TEST_DATA, 'rb'))
 
-model.load_weights('/Users/82102/Desktop/project/yt_cr/test_analy/DATA_OUT/cnn_classifier_kr/weights.h5')
+model.load_weights('/Users/82102/Desktop/project/yt_cr/study_test_analy/DATA_OUT/cnn_classifier_kr/weights.h5')
 model.evaluate(test_input, test_label_data)

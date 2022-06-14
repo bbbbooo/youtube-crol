@@ -16,7 +16,7 @@ okt = Okt()
 tokenizer  = Tokenizer()
 
 DATA_CONFIGS = 'data_configs.json'
-prepro_configs = json.load(open('/Users/82102/Desktop/project/yt_cr/test_analy/Users/82102/Desktop/project/yt_cr/test_analy/CLEAN_DATA/'+DATA_CONFIGS,'r'))
+prepro_configs = json.load(open('/Users/82102/Desktop/project/yt_cr/study_test_analy/Users/82102/Desktop/project/yt_cr/test_analy/CLEAN_DATA/'+DATA_CONFIGS,'r'))
 
 word_vocab = tokenizer.word_index #단어사전형태
 prepro_configs['vocab'] = word_vocab
@@ -34,8 +34,8 @@ vector  = tokenizer.texts_to_sequences(sentence)
 pad_new = pad_sequences(vector, maxlen = MAX_LENGTH) # 패딩
 
 
-model = keras.models.load_model('/Users/82102/Desktop/project/yt_cr/test_analy/DATA_OUT/cnn_classifier_kr/')
-model.load_weights('/Users/82102/Desktop/project/yt_cr/test_analy/DATA_OUT/cnn_classifier_kr/weights.h5') #모델 불러오기
+model = keras.models.load_model('/Users/82102/Desktop/project/yt_cr/study_test_analy/DATA_OUT/cnn_classifier_kr/')
+model.load_weights('/Users/82102/Desktop/project/yt_cr/study_test_analy/DATA_OUT/cnn_classifier_kr/weights.h5') #모델 불러오기
 
 predictions = model.predict(pad_new)
 predictions = float(predictions.squeeze(-1)[1])

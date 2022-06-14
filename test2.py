@@ -10,6 +10,8 @@ import os
 import re
 import streamlit as st
 import pafy as pa
+import matplotlib
+matplotlib.use('Agg') 
 
 ## 웹
 
@@ -20,6 +22,7 @@ try:
 
 
     st.title("Youtube-CR")
+    
 
     input_url = st.text_input(label="URL", value="")
     url=input_url
@@ -41,9 +44,9 @@ try:
 
     if st.button("Search"):
         con = st.container()
-        with st.spinner("Please wait for few seconds"):
-            time.sleep(3)
-        st.success("The search was successful. If you want to exit, press Ctrl + C")
+        with st.spinner("Searching...."):
+            time.sleep(2)
+        st.success("The search was successful. It takes approximately one minute to analyze the results. Just a moment, please.")
             
         con.caption("Result")
         con.write(f"The entered video address is {str(input_url)}")
@@ -120,6 +123,7 @@ from keras.models import load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
+
 # 데이터셋 다운로드. 완료하였다면 주석처리 할 것.
 #urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt", filename="ratings_train.txt")
 #urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_test.txt", filename="ratings_test.txt")
@@ -136,7 +140,7 @@ train_data['label'].value_counts().plot(kind = 'bar')
 
 #널값을 가진 샘플이 어디 인덱스에 위치했는지..
 train_data = train_data.dropna(how = 'any') # Null 값이 존재하는 행 제거
-
+  
 # 한글과 공백을 제외하고 모두 제거
 train_data['document'] = train_data['document'].str.replace("[^ㄱ-ㅎㅏ-ㅣ가-힣 ]","")
 train_data['document'] = train_data['document'].str.replace('^ +', "") # white space 데이터를 empty value로 변경
@@ -149,11 +153,14 @@ test_data['document'] = test_data['document'].str.replace("[^ㄱ-ㅎㅏ-ㅣ가-�
 test_data['document'] = test_data['document'].str.replace('^ +', "") # 공백은 empty 값으로 변경
 test_data['document'].replace('', np.nan, inplace=True) # 공백은 Null 값으로 변경
 test_data = test_data.dropna(how='any') # Null 값 제거
+    
 
 #불용어 처리
 stopwords = ['의','가','이','은','들','는','좀','잘','걍','과','도','를','으로','자','에','와','한','하다']
 
 okt = Okt()
+
+
 
 X_train = []
 for sentence in tqdm(train_data['document']):
@@ -168,7 +175,9 @@ for sentence in tqdm(test_data['document']):
     stopwords_removed_sentence = [word for word in tokenized_sentence if not word in stopwords] # 불용어 제거
     X_test.append(stopwords_removed_sentence)
     
-    
+
+            
+            
 tokenizer = Tokenizer()
 tokenizer.fit_on_texts(X_train)
 
@@ -253,16 +262,26 @@ def sentiment_predict(new_sentence):
   encoded = tokenizer.texts_to_sequences([new_sentence]) # 정수 인코딩
   pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
   score = float(loaded_model.predict(pad_new)) # 예측
+  
+  
   if(score > 0.5):
-    print(new_sentence)
+    #print(new_sentence)
     print("{:.2f}% 확률로 긍정 리뷰입니다.\n".format(score * 100))
+    
   else:
-    print(new_sentence)
+    #print(new_sentence)
     print("{:.2f}% 확률로 부정 리뷰입니다.\n".format((1 - score) * 100))
-
+    
 
 
 filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/%s.xlsx' % rp_video_title)
+sheet = filename['comment']
+
+# comment 칼럼의 각각의 데이터를 읽기
+for cell in sheet:
+    output_sentence = str(cell)
+    sentiment_predict(output_sentence)
+
 
 output_sentence = str(filename['comment'])
 sentiment_predict(output_sentence)
