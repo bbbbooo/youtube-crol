@@ -30,10 +30,28 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 # 웹 제목
 st.title("Youtube-CR")
 
-#주소 가져오기 및 videoid 추출
+# 주소 입력
 input_url = st.text_input(label="URL", value="")
 url=input_url
 my_str = url.replace("https://www.youtube.com/watch?v=","")
+
+# 주소 뒤 시간이 있다면..
+def num_re():
+    for i in range(3):
+        if my_str.find("&t="):
+            temp ="&t=%ss" %i
+            str = my_str.replace(temp, "")
+            
+            # find 결과가 false면 -1 리턴됨
+            if str.find("&t=")==-1:
+                return str
+            else:
+                a=1
+        else:
+            return str 
+    return str
+
+my_str2 = num_re()
 
 #썸네일 출력
 def get_thumbnail(url):
@@ -57,7 +75,7 @@ def Crawling():
     api_key = 'AIzaSyDCLqtKIMyBZ82hWpUj1QcTg_glkAlk1kk'
     comments = list()
     api_obj = build('youtube', 'v3', developerKey=api_key)
-    response = api_obj.commentThreads().list(part='snippet,replies', videoId=my_str, maxResults=100).execute()
+    response = api_obj.commentThreads().list(part='snippet,replies', videoId=my_str2, maxResults=100).execute()
     while response:
         for item in response['items']:
             comment = item['snippet']['topLevelComment']['snippet']
@@ -241,8 +259,6 @@ def Analysis():
     filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/%s.xlsx' % title_get())
     sheet = filename['comment']
     #pw = pd.DataFrame(list(filename.items()), columns=['comment', 'author'])
-
-
     #sheet.replace("&lt;a href=https://www.youtube.com/watch?v=kR7qz8liQqA&amp;amp;t=7m57s&gt;7:57&lt;/a&gt;", "")
 
 
@@ -252,7 +268,7 @@ def Analysis():
         sentiment_predict(output_sentence)
 
 
-# 원형 그래프 생성
+# 원형 차트 생성
 def Create_plot():
         allen = len(sheet)
         poslen = len(pd_contain)
@@ -284,7 +300,7 @@ if st.button("Search"):
     con.write(f"The entered video address is {str(input_url)}")
     # 썸네일 출력
     st.header('Thumbnail')
-    st.image(get_thumbnail(my_str))
+    st.image(get_thumbnail(my_str2))
     
     # 댓글 크롤링
     Crawling()
@@ -309,7 +325,7 @@ if st.button("Search"):
     st.header("Negative")
     st.write(neg_result)
     
-    # pie plot
+    # 원형 차트 출력
     st.header('Pie Plot')
     Create_plot()
     

@@ -89,9 +89,6 @@ def sentiment_predict(new_sentence):
             #print("{:.2f}% 확률로 부정 리뷰입니다.\n".format((1 - score) * 100))
             
           
-        
-          
-          
 
 filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/벨베스 사기네.xlsx')
 sheet = filename['comment']
