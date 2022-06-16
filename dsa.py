@@ -1,19 +1,22 @@
-from selenium import webdriver
-import time
-from openpyxl import Workbook
-import pandas as pd
-from selenium.webdriver.common.keys import Keys
-from bs4 import BeautifulSoup
-from sqlalchemy import null
-from googleapiclient.discovery import build
-import os
-import re
+from csv import excel
+from tkinter import CENTER, Label
 import streamlit as st
+import pandas as pd
+from googleapiclient.discovery import build
+import warnings # 경고창 무시
+import re
+import os
+import time
 import pafy as pa
+warnings.filterwarnings('ignore')
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import re
 import urllib.request
+import os
+import openpyxl
 from konlpy.tag import Okt
 from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
@@ -24,82 +27,65 @@ from keras.models import load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
 
+#---------------
 
+st.title("YouTube 댓글 민심 사이트")
+input_name = st.text_input(label="여기에 URL을 입력하세요", value="")
 
-
-# 웹 제목
-st.title("Youtube-CR")
-
-#주소 가져오기 및 videoid 추출
-input_url = st.text_input(label="URL", value="")
-url=input_url
+url= ""
+url=input_name
 my_str = url.replace("https://www.youtube.com/watch?v=","")
 
-#썸네일 출력
-def get_thumbnail(url):
-    id = url
-    img = 'https://img.youtube.com/vi/{}/0.jpg'.format(id)
-    return img    
 
-# 제목 가져와서 변환 후 변환 값 return
-def title_get():
+def youtubetitle():
+    #제목 가져오기
     videoinfo = pa.new(url)
     video_title = videoinfo.title
-    
+
     #제목 특수기호 있으면 공백으로 치환
     rp_video_title = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…《\》]', '', video_title)
     return rp_video_title
 
-
-# 댓글 크롤링하여 xlsx 형태로 video_xlxs 폴더에 저장
+    
 def Crawling():
-    #api키 입력
-    api_key = 'AIzaSyDCLqtKIMyBZ82hWpUj1QcTg_glkAlk1kk'
+
     comments = list()
-    api_obj = build('youtube', 'v3', developerKey=api_key)
+    api_obj = build('youtube', 'v3', developerKey='AIzaSyA3vPhjSHzj_mz4SSsu55eHZw0oydLA8fg')
     response = api_obj.commentThreads().list(part='snippet,replies', videoId=my_str, maxResults=100).execute()
+
     while response:
         for item in response['items']:
             comment = item['snippet']['topLevelComment']['snippet']
             comments.append([comment['textDisplay'], comment['authorDisplayName'], comment['publishedAt'], comment['likeCount']])
-            # 대댓글 불러오기
-            # if item['snippet']['totalReplyCount'] > 0:
-            #     for reply_item in item['replies']['comments']:
-            #     d    reply = reply_item['snippet']
-            #         comments.append([reply['textDisplay'], reply['authorDisplayName'], reply['publishedAt'], reply['likeCount']])
+
         if 'nextPageToken' in response:
-            response = api_obj.commentThreads().list(part='snippet,replies', videoId='sWC-pp6CXpA', pageToken=response['nextPageToken'], maxResults=100).execute()
+            response = api_obj.commentThreads().list(part='snippet,replies', videoId=my_str, pageToken=response['nextPageToken'], maxResults=100).execute()
         else:
             break
+
     df = pd.DataFrame(comments)
-    df.to_excel('./video_xlxs/%s.xlsx' % (title_get()), header=['comment', 'author', 'date', 'num_likes'], index=None)
-    path = './video_xlxs/%s.xlsx' % (title_get())
+    df.to_excel('%s.xlsx'%youtubetitle(), header=['comment', 'author', 'date', 'num_likes'], index=None)
+
+    path = '%s.xlsx' % (youtubetitle())
     while os.path.exists(path) :
-        df.to_excel('./video_xlxs/%s.xlsx' % (title_get()), header=['comment', 'author', 'date', 'num_likes'], index=None)
-        break
+      df.to_excel('%s.xlsx' % (youtubetitle()), header=['comment', 'author', 'date', 'num_likes'], index=None)
+      break
 
-
-
-##################### 데이터 전처리
-
-
-# 데이터셋 다운로드. 완료하였다면 주석처리 할 것.
-#urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt", filename="ratings_train.txt")
-#urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_test.txt", filename="ratings_test.txt")
-
-
-# 긍정, 부정 문장을 담는 배열
 contain = []        #긍정 cell
 contain_number =[]  #긍정 확률
 contain2 = []       #부정 cell
 contain2_number = []#부정 확률
 
 def Analysis():
-    train_data = pd.read_table('/Users/82102/Desktop/project/yt_cr/study_analy/rating_data/ratings_train.txt')
-    test_data = pd.read_table('/Users/82102/Desktop/project/yt_cr/study_analy/rating_data/ratings_test.txt')
+        # 데이터셋 다운로드. 완료하였다면 주석처리 할 것.
+    # urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt", filename="ratings_train.txt")
+    # urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_test.txt", filename="ratings_test.txt")
+
+    train_data = pd.read_table('C:/Users/jaehoon/Desktop/00_study/Excel/DATA/ratings_train.txt')
+    test_data = pd.read_table('C:/Users/jaehoon/Desktop/00_study/Excel/DATA/ratings_test.txt')
 
     # document 열과 label 열의 중복을 제외한 값의 개수
-    #train_data['document'].nunique(), train_data['label'].nunique()
+    train_data['document'].nunique(), train_data['label'].nunique()
 
     # document 열의 중복 제거
     train_data.drop_duplicates(subset=['document'], inplace=True)
@@ -107,7 +93,7 @@ def Analysis():
 
     #널값을 가진 샘플이 어디 인덱스에 위치했는지..
     train_data = train_data.dropna(how = 'any') # Null 값이 존재하는 행 제거
-    
+
     # 한글과 공백을 제외하고 모두 제거
     train_data['document'] = train_data['document'].str.replace("[^ㄱ-ㅎㅏ-ㅣ가-힣 ]","")
     train_data['document'] = train_data['document'].str.replace('^ +', "") # white space 데이터를 empty value로 변경
@@ -120,7 +106,6 @@ def Analysis():
     test_data['document'] = test_data['document'].str.replace('^ +', "") # 공백은 empty 값으로 변경
     test_data['document'].replace('', np.nan, inplace=True) # 공백은 Null 값으로 변경
     test_data = test_data.dropna(how='any') # Null 값 제거
-
 
     #불용어 처리
     stopwords = ['의','가','이','은','들','는','좀','잘','걍','과','도','를','으로','자','에','와','한','하다']
@@ -139,8 +124,6 @@ def Analysis():
         tokenized_sentence = okt.morphs(sentence, stem=True) # 토큰화
         stopwords_removed_sentence = [word for word in tokenized_sentence if not word in stopwords] # 불용어 제거
         X_test.append(stopwords_removed_sentence)
-
-
 
 
     tokenizer = Tokenizer()
@@ -193,9 +176,8 @@ def Analysis():
     X_train = pad_sequences(X_train, maxlen=max_len)
     X_test = pad_sequences(X_test, maxlen=max_len)
 
-
-    path = '/Users/82102/Desktop/project/yt_cr/study_analy/model/best_model.h5'
-    PATH = '/Users/82102/Desktop/project/yt_cr/study_analy/model/'
+    path = 'C:/Users/jaehoon/Desktop/00_study/Excel/DATA/best_model.h5'
+    PATH = 'C:/Users/jaehoon/Desktop/00_study/Excel/DATA/'
     if os.path.isfile(path):
         print("File exists")
     else:
@@ -208,111 +190,95 @@ def Analysis():
         model.add(Dense(1, activation='sigmoid'))
 
         es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=4)
+
+
         mc = ModelCheckpoint(PATH + 'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
 
         model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
         history = model.fit(X_train, y_train, epochs=15, callbacks=[es, mc], batch_size=512, validation_split=0.2)
 
-
-
     loaded_model = load_model(PATH + 'best_model.h5')
     #print("\n 테스트 정확도: %.4f" % (loaded_model.evaluate(X_test, y_test)[1]))
 
-    
-
     def sentiment_predict(new_sentence):
-            new_sentence = re.sub(r'[^ㄱ-ㅎㅏ-ㅣ가-힣 ]','', str(new_sentence))
-            new_sentence = okt.morphs(new_sentence, stem=True) # 토큰화
-            new_sentence = [word for word in new_sentence if not word in stopwords] # 불용어 제거
-            encoded = tokenizer.texts_to_sequences([new_sentence]) # 정수 인코딩
-            pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
-            score = float(loaded_model.predict(pad_new)) # 예측
+        new_sentence = re.sub(r'[^ㄱ-ㅎㅏ-ㅣ가-힣 ]','', new_sentence)
+        new_sentence = okt.morphs(new_sentence, stem=True) # 토큰화
+        new_sentence = [word for word in new_sentence if not word in stopwords] # 불용어 제거
+        encoded = tokenizer.texts_to_sequences([new_sentence]) # 정수 인코딩
 
-            if(score > 0.5):
-                contain.append(cell)
-                contain_number.append(score * 100)
+        pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
+        score = float(loaded_model.predict(pad_new)) # 예측
 
-            else:
-                contain2.append(cell)
-                contain2_number.append( (1 - score) * 100)
+        if(score > 0.5):
+          # print(new_sentence)
+        #   print(cell)
+        #   print("{:.2f}% 확률로 긍정 리뷰입니다.\n".format(score * 100))
+          contain.append(cell)
+          contain_number.append(score * 100)
+        else:
+        #   print(cell)
+          # print(new_sentence)
+        #   print("{:.2f}% 확률로 부정 리뷰입니다.\n".format((1 - score) * 100))
+          contain2.append(cell)
+          contain2_number.append(score * 100)
 
 
-    global filename, sheet
-    filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/%s.xlsx' % title_get())
+    filename = pd.read_excel('C:/Users/jaehoon/Desktop/00_study/Crawling2222/%s.xlsx' %(youtubetitle()))
     sheet = filename['comment']
-    #pw = pd.DataFrame(list(filename.items()), columns=['comment', 'author'])
 
-
-    #sheet.replace("&lt;a href=https://www.youtube.com/watch?v=kR7qz8liQqA&amp;amp;t=7m57s&gt;7:57&lt;/a&gt;", "")
-
-
-    # comment 칼럼의 각각의 데이터를 읽기
     for cell in sheet:
+        # print(cell)
         output_sentence = str(cell)
         sentiment_predict(output_sentence)
 
+#_----------------------------------------------------------------------
 
-# 원형 그래프 생성
-def Create_plot():
-        allen = len(sheet)
-        poslen = len(pd_contain)
-        neglen = len(pd_contain2)
-
-        pos_ratio = (poslen/allen) * 100
-        neg_ratio = (neglen/allen) * 100
-
-        labels = ['Positive', 'Negative']
-        ratio = pos_ratio, neg_ratio
-
-        fig, ax = plt.subplots()
-        ax.pie(ratio, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
-        ax.axis('equal')
-
-        st.pyplot(fig, clear_figure=True)
-        #plt.savefig("mygraph.png")
-
-
-# Search 버튼 클릭 시....
-if st.button("Search"):
+if st.button("검색"):
     con = st.container()
-    with st.spinner("Searching...."):
-        time.sleep(2)
-    st.success("The search was successful. It takes approximately one minute to analyze the results. Just a moment, please.")
-    
-    # 결과(입력 주소) 출력
-    con.caption("Result")
-    con.write(f"The entered video address is {str(input_url)}")
-    # 썸네일 출력
-    st.header('Thumbnail')
-    st.image(get_thumbnail(my_str))
-    
-    # 댓글 크롤링
-    Crawling()
-    
-    # 데이터 분석
-    Analysis()
-    
-    # 긍정 댓글, 확률
-    pd_contain = pd.DataFrame({'Postive_Comments' : contain})
-    pd_contain_number = pd.DataFrame({'Probability': contain_number})
-    pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
-    
-    #부정 댓글, 확률
-    pd_contain2 = pd.DataFrame({'Negative' : contain2})
-    pd_contain_number2 = pd.DataFrame({'Probability': contain2_number})
-    neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
-    
-    # 출력
-    st.header("Positive")
-    st.write(pos_result)
-    
-    st.header("Negative")
-    st.write(neg_result)
-    
-    # pie plot
-    st.header('Pie Plot')
-    Create_plot()
+    with st.spinner('크롤링 중입니다.. 기다려주세요♥'):
+        Crawling()
+    st.success(" YouTube 크롤링이 완료되었습니다!")
+    print(youtubetitle())
+    openexcel = pd.read_excel('%s.xlsx'%youtubetitle())
+    con.write(openexcel)
     
     
+if st.button("감정분석"):
+    con = st.container()
+    with st.spinner('감정분석 중입니다.. 기다려주세요♥'):
+        Analysis()
+    st.success(" YouTube 크롤링이 완료되었습니다!")
+    pd_contain = pd.DataFrame({'긍정댓글' : [contain]})
+    pd_contain_number = pd.DataFrame({'확률' : [contain_number]})
 
-        
+    pd_contain2 = pd.DataFrame({'부정댓글' : [contain2]})
+    pd_contain2_number = pd.DataFrame({'확률' : [contain2_number]})
+    
+    result = pd.concat([pd_contain, pd_contain_number], axis=1)
+    result1 = pd.DataFrame(result)
+
+    st.header("긍정댓글")
+    st.write(result1)
+
+    st.header("부정댓글")
+    st.write(pd_contain2)
+
+    #----
+    # con = st.container()
+    # filename = pd.read_excel('C:/Users/jaehoon/Desktop/00_study/Crawling2222/%s.xlsx' %(youtubetitle()))
+    # sheet = filename['comment']
+
+    # for cell in sheet:
+    #     output_sentence = str(cell)
+    #     Analysis(output_sentence)
+    
+    # pd_contain = pd.DataFrame(contain)
+    # pd_contain2 = pd.DataFrame(contain2)
+    # for i, j in zip(contain, contain_number):
+    #     st.text(i)
+    #     st.text("{:.2f}% 확률로 긍정 리뷰입니다.\n".format(j))
+    #     st.text("----------------------------------------------------------------------")
+
+    # for i, j in zip(contain, contain_number):
+    #     con.write(i)
+    #     con.write("{:.2f}% 확률로 긍정 리뷰입니다.\n".format(j))
