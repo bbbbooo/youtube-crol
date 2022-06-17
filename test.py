@@ -74,7 +74,7 @@ def sentiment_predict(new_sentence):
             
             
             #print(cell)
-            contain.append(cell)
+            contain.append(list)
             contain_number.append(score * 100)
             
             #print("{:.2f}% 확률로 긍정 리뷰입니다.\n".format(score * 100))
@@ -83,7 +83,7 @@ def sentiment_predict(new_sentence):
             # st.header("Negative")
             # st.text(cell)
             
-            contain2.append(cell)
+            contain2.append(list)
             contain2_number.append( (1 - score) * 100)
             
             #print("{:.2f}% 확률로 부정 리뷰입니다.\n".format((1 - score) * 100))
@@ -103,13 +103,25 @@ sheet = filename['comment']
 
 # comment 칼럼의 각각의 데이터를 읽기
 for cell in sheet:
+    list = []
     output_sentence = str(cell)
-    sentiment_predict(output_sentence)
+    #cmrp = re.sub('[^가-힣]', '', str(cell))
+    if "</a>" in output_sentence:
+        split = output_sentence.split('</a>')
+        if split[1] == '':
+            continue
+        else:
+            list.append(split[1])
+    else:
+        list.append(output_sentence)
     
+    print(list)
     
-  
-
-  
+    sentiment_predict(list)
+    
+def Sub_comments():
+    cmrp = re.sub('[^가-힣]', '', sheet)
+    return cmrp 
 
 #긍정
 pd_contain = pd.DataFrame({'Postive' : contain})

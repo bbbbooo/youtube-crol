@@ -37,7 +37,7 @@ my_str = url.replace("https://www.youtube.com/watch?v=","")
 
 # 주소 뒤 시간이 있다면..
 def num_re():
-    for i in range(3):
+    for i in range(10000000):
         if my_str.find("&t="):
             temp ="&t=%ss" %i
             str = my_str.replace(temp, "")
@@ -246,46 +246,73 @@ def Analysis():
             pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
             score = float(loaded_model.predict(pad_new)) # 예측
 
+            # 긍정적이라면 contain 리스트에 추가
             if(score > 0.5):
-                contain.append(cell)
+                contain.append(list)
                 contain_number.append(score * 100)
 
+            # 부정적이라면 contain2 리스트에 추가
             else:
-                contain2.append(cell)
+                contain2.append(list)
                 contain2_number.append( (1 - score) * 100)
 
-
+    # 다른 함수에서도 쓰기 위해 global 선언
     global filename, sheet
     filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/%s.xlsx' % title_get())
     sheet = filename['comment']
-    #pw = pd.DataFrame(list(filename.items()), columns=['comment', 'author'])
-    #sheet.replace("&lt;a href=https://www.youtube.com/watch?v=kR7qz8liQqA&amp;amp;t=7m57s&gt;7:57&lt;/a&gt;", "")
 
 
     # comment 칼럼의 각각의 데이터를 읽기
     for cell in sheet:
+        list = []
         output_sentence = str(cell)
-        sentiment_predict(output_sentence)
+        #cmrp = re.sub('[^가-힣]', '', str(cell))
+        
+        # 댓글에 html 코드가 존재한다면...
+        if "</a>" in output_sentence:
+            split = output_sentence.split('</a>')
+            
+            # 지우고 나서 split의 1번째 index에 '' <<(이름 모를 공백값, NULL값 아님)이 있다면 제거. 출력 안함
+            if split[1] == '':
+                continue
+            # 없으면 list에 저장
+            else:
+                list.append(split[1])
+        
+        # 아무것도 해당 안되면 바로 list에 추가
+        else:
+            list.append(output_sentence)
+        
+        # 감정 예측
+        sentiment_predict(list)
+
+
 
 
 # 원형 차트 생성
 def Create_plot():
+        # 엑셀 컬럼 중 comments의 길이(allen), 해당 컬럼의 긍정적인 부분 길이(poslen), 부정적인 부분 길이(neglen) 체크
         allen = len(sheet)
         poslen = len(pd_contain)
         neglen = len(pd_contain2)
 
+        # 위에서 계산한걸 나눠서 상대빈도를 계산
         pos_ratio = (poslen/allen) * 100
         neg_ratio = (neglen/allen) * 100
 
+        # 원형 차트의 라벨, 라벨이 가질 비율 정의
         labels = ['Positive', 'Negative']
         ratio = pos_ratio, neg_ratio
 
+        # 원형 차트 조건
         fig, ax = plt.subplots()
         ax.pie(ratio, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
         ax.axis('equal')
 
+        # 원형 차트 생성
         st.pyplot(fig, clear_figure=True)
         #plt.savefig("mygraph.png")
+
 
 
 # Search 버튼 클릭 시....
@@ -308,6 +335,7 @@ if st.button("Search"):
     # 데이터 분석
     Analysis()
     
+    
     # 긍정 댓글, 확률
     pd_contain = pd.DataFrame({'Postive_Comments' : contain})
     pd_contain_number = pd.DataFrame({'Probability': contain_number})
@@ -318,7 +346,7 @@ if st.button("Search"):
     pd_contain_number2 = pd.DataFrame({'Probability': contain2_number})
     neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
     
-    # 출력
+    # 데이터 프레임 출력
     st.header("Positive")
     st.write(pos_result)
     
