@@ -5,4 +5,5 @@
 
 study 라 명시돼있는 폴더들은 테스트용.
 
+메인코드는 test
 실행코드는 straemlit run test2.py

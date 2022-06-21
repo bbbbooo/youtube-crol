@@ -26,10 +26,16 @@ def Sub_comments():
             if split[1] == '':
                 continue
             else:
-                list.append(split[1])
+                split2 = re.sub('[#/\^$@*\"※~&%ㆍ』\\‘|\(\)\[\]\<\>`\'…《\》]', '', split[1])
+                split3 = split2.replace('<br>', '')
+                list.append(split3)
         
         else:
-            list.append(cell)
+            if cell.find('<br>'):
+                split = cell.replace('<br>', '')
+                
+            split2 = re.sub('[#/\^$@*\"※~&%ㆍ』\\‘|\(\)\[\]\<\>`\'…《\》]', '', split)
+            list.append(split2)
             
     return list
 

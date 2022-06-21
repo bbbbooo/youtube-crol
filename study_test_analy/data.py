@@ -7,11 +7,10 @@ from konlpy.tag import Okt
 from keras.utils import pad_sequences
 from keras.preprocessing.text import Tokenizer
 
-DATA_PATH = '/Users/82102/Desktop/project/yt_cr/test_analy/DATA/'
+DATA_PATH = '/Users/82102/Desktop/project/yt_cr/study_test_analy/DATA/'
 train_data = pd.read_csv(DATA_PATH+'ratings_train.txt', header = 0, delimiter='\t', quoting=3)
 
 train_data['document'][:5]
-print(train_data)
 
 
 #전처리 함수 만들기
@@ -46,7 +45,7 @@ def preprocessing(review, okt, remove_stopwords = False, stop_words =[]):
       clean_train_review[:4]
   
       #테스트 리뷰도 동일하게 전처리
-      DATA_PATH = '/Users/82102/Desktop/project/yt_cr/test_analy/DATA/'
+      DATA_PATH = '/Users/82102/Desktop/project/yt_cr/study_test_analy/DATA/'
       test_data = pd.read_csv(DATA_PATH + 'ratings_test.txt', header = 0, delimiter='\t', quoting=3)
 
       clean_test_review = []
@@ -77,8 +76,8 @@ def preprocessing(review, okt, remove_stopwords = False, stop_words =[]):
       test_labels = np.array(test_data['label'])
   
   
-      DEFAULT_PATH  = '/Users/82102/Desktop/project/yt_cr/test_analy'
-      DATA_PATH = '/Users/82102/Desktop/project/yt_cr/test_analy/CLEAN_DATA/'
+      DEFAULT_PATH  = '/Users/82102/Desktop/project/yt_cr/study_test_analy'
+      DATA_PATH = '/Users/82102/Desktop/project/yt_cr/study_test_analy/CLEAN_DATA/'
       TRAIN_INPUT_DATA = 'nsmc_train_input.npy'
       TRAIN_LABEL_DATA = 'nsmc_train_label.npy'
       TEST_INPUT_DATA = 'nsmc_test_input.npy'
@@ -91,6 +90,7 @@ def preprocessing(review, okt, remove_stopwords = False, stop_words =[]):
 
       #전처리한 데이터들 파일로저장
       import os
+      import pickle
 
       if not os.path.exists(DEFAULT_PATH + DATA_PATH):
             os.makedirs(DEFAULT_PATH+DATA_PATH)
@@ -104,5 +104,9 @@ def preprocessing(review, okt, remove_stopwords = False, stop_words =[]):
 
       #데이터 사전 json으로 저장
       json.dump(data_configs,open(DEFAULT_PATH + DATA_PATH + DATA_CONFIGS,'w'),ensure_ascii=False)
+      
+      PATH = 'C:/Users/82102/Desktop/project/yt_cr/study_test_analy/token/'
+      with open(PATH +'tokenizer.pickle', 'wb') as handle:
+        pickle.dump(tokenizer, handle)
   
 preprocessing(train_data , Okt)

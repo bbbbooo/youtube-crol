@@ -22,6 +22,7 @@ from keras.layers import Embedding, Dense, LSTM
 from keras.models import Sequential
 from keras.models import load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+import pickle
 
 
 
@@ -30,13 +31,16 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 # 웹 제목
 st.title("Youtube-CR")
 
+
 # 주소 입력
 input_url = st.text_input(label="URL", value="")
 url=input_url
 my_str = url.replace("https://www.youtube.com/watch?v=","")
 
+
 # 주소 뒤 시간이 있다면..
 def num_re():
+
     for i in range(10000000):
         if my_str.find("&t="):
             temp ="&t=%ss" %i
@@ -229,7 +233,10 @@ def Analysis():
         mc = ModelCheckpoint(PATH + 'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
 
         model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
-        history = model.fit(X_train, y_train, epochs=15, callbacks=[es, mc], batch_size=512, validation_split=0.2)
+        model.fit(X_train, y_train, epochs=15, callbacks=[es, mc], batch_size=512, validation_split=0.2)
+        
+        with open('tokenizer.pickle', 'wb') as handle:
+            pickle.dump(tokenizer, handle)
 
 
 
@@ -277,7 +284,8 @@ def Analysis():
                 continue
             # 없으면 list에 저장
             else:
-                list.append(split[1])
+                split2 = split[1].replace('<br>', '')
+                list.append(split2)
         
         # 아무것도 해당 안되면 바로 list에 추가
         else:
@@ -313,50 +321,69 @@ def Create_plot():
         st.pyplot(fig, clear_figure=True)
         #plt.savefig("mygraph.png")
 
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def etc():
+    st.write('not yet')
+
+#-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+option = st.sidebar.selectbox(
+    '원하는 기능을 선택해주세요',
+    ['Youtube-Comments-Analysis', 'etc'])
+
+'You seleted : ', option
 
 
-# Search 버튼 클릭 시....
-if st.button("Search"):
-    con = st.container()
-    with st.spinner("Searching...."):
-        time.sleep(2)
-    st.success("The search was successful. It takes approximately one minute to analyze the results. Just a moment, please.")
-    
-    # 결과(입력 주소) 출력
-    con.caption("Result")
-    con.write(f"The entered video address is {str(input_url)}")
-    # 썸네일 출력
-    st.header('Thumbnail')
-    st.image(get_thumbnail(my_str2))
-    
-    # 댓글 크롤링
-    Crawling()
-    
-    # 데이터 분석
-    Analysis()
-    
-    
-    # 긍정 댓글, 확률
-    pd_contain = pd.DataFrame({'Postive_Comments' : contain})
-    pd_contain_number = pd.DataFrame({'Probability': contain_number})
-    pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
-    
-    #부정 댓글, 확률
-    pd_contain2 = pd.DataFrame({'Negative' : contain2})
-    pd_contain_number2 = pd.DataFrame({'Probability': contain2_number})
-    neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
-    
-    # 데이터 프레임 출력
-    st.header("Positive")
-    st.write(pos_result)
-    
-    st.header("Negative")
-    st.write(neg_result)
-    
-    # 원형 차트 출력
-    st.header('Pie Plot')
-    Create_plot()
-    
-    
 
-        
+def Youtube_Comments_Analysis():
+    # Search 버튼 클릭 시....
+    if st.button("Search"):
+        con = st.container()
+        with st.spinner("Searching...."):
+            time.sleep(2)
+        st.success("The search was successful. It takes approximately one minute to analyze the results. Just a moment, please.")
+
+        # 결과(입력 주소) 출력
+        con.caption("Result")
+        con.write(f"The entered video address is {str(input_url)}")
+        # 썸네일 출력
+        st.header('Thumbnail')
+        st.image(get_thumbnail(my_str2))
+
+        # 댓글 크롤링
+        Crawling()
+            
+        # 데이터 분석
+        Analysis()
+
+
+
+        # 긍정 댓글, 확률
+        global pd_contain, pd_contain2
+        pd_contain = pd.DataFrame({'Postive_Comments' : contain})
+        pd_contain_number = pd.DataFrame({'Probability': contain_number})
+        pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
+
+        #부정 댓글, 확률
+        pd_contain2 = pd.DataFrame({'Negative' : contain2})
+        pd_contain_number2 = pd.DataFrame({'Probability': contain2_number})
+        neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
+
+        # 데이터 프레임 출력(왼쪽 사이드바)
+        st.header("Positive")
+        st.write(pos_result)
+
+        st.header("Negative")
+        st.write(neg_result)
+
+        # 원형 차트 출력
+        st.header('pie plot')
+        Create_plot()
+
+# 유튜브 댓글 분석 선택하면 해당 기능 실행...
+if option == 'Youtube-Comments-Analysis':
+    Youtube_Comments_Analysis()
+
+if option == 'etc':
+    st.write('not yet')
