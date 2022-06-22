@@ -32,7 +32,7 @@ okt = Okt()
 PATH = '/Users/82102/Desktop/project/yt_cr/model/save_model/'
 loaded_model = load_model(PATH + 'best_model.h5')
 
-PATH2 = '/Users/82102/Desktop/project/yt_cr/'
+PATH2 = '/Users/82102/Desktop/project/yt_cr/model/token/'
 with open(PATH2+'tokenizer.pickle', 'rb') as handle:
     tokenizer = pickle.load(handle)
 
@@ -64,7 +64,7 @@ def sentiment_predict(new_sentence):
             
           
 
-filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/극혐 킥라니 멈춰 압도적 가성비라는 말에 입문용 전동 킥보드를 사봤습니다.xlsx')
+filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/파리지옥.xlsx')
 sheet = filename['comment']
 
 # comment 칼럼의 각각의 데이터를 읽기
