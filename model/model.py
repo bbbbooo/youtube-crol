@@ -12,7 +12,7 @@ from keras.utils import pad_sequences
 from keras.layers import Embedding, Dense, LSTM
 from keras.models import Sequential
 from keras.models import load_model
-from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import pickle
 
 
@@ -129,13 +129,22 @@ else:
     model = Sequential()
     model.add(Embedding(vocab_size, embedding_dim))
     model.add(LSTM(hidden_units))
+    model.add(Dense(8, input_dim = 4, kernel_initializer = 'uniform', activation = 'relu'))
+    model.add(Dense(1, activation='sigmoid'))
+    
+    model = Sequential()
+    model.add(Embedding(vocab_size, embedding_dim))
+    model.add(LSTM(hidden_units))
+    model.add(Dense(30, input_dim = 12, activation='relu'))
+    model.add(Dense(12, kernel_initializer = 'uniform', activation='relu'))
+    model.add(Dense(8, kernel_initializer = 'uniform', activation='relu'))
     model.add(Dense(1, activation='sigmoid'))
 
-    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=4)
+    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=5)
     mc = ModelCheckpoint(PATH + 'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
 
     model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
-    model.fit(X_train, y_train, epochs=15, callbacks=[es,mc], batch_size=512, validation_split=0.2)
+    model.fit(X_train, y_train, epochs=15, callbacks=[es, mc], batch_size=512, validation_split=0.2)
     
     PATH2 = '/Users/82102/Desktop/project/yt_cr/model/token/'
     with open(PATH2 +'tokenizer.pickle', 'wb') as handle:

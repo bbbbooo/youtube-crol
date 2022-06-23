@@ -22,6 +22,15 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 import streamlit as st
 import pickle
 matplotlib.use('TkAgg')   
+plt.switch_backend('agg')
+
+#####
+
+# 해당 코드는 main.py의 url 입력, 크롤링 부분 제외한 테스트 코드
+# 따라서 현 파일의 83줄 read.excel에서 main.py을 통해 생성된 엑셀 파일의 이름을 직접 적어야 함
+# 실행은 streamlit run test.py
+
+#####
 
 
 st.header('asdsad')
@@ -29,18 +38,30 @@ st.header('asdsad')
 tokenizer = Tokenizer()
 okt = Okt()
 
+
+
+#######
+# 1. 다른사람한테 받은 모델과 토큰값은 model_test에 저장
+# 1-1. 이 경우 아래 PATH의 model_test 주석을 해제
+
+# 2. model 폴더에서 모델과 토큰값을 생성한 경우
+# 2-1. 아래 PATH의 save_model 주석을 해제
+#######
+
+
+
 PATH = '/Users/82102/Desktop/project/yt_cr/model/save_model/'
+#PATH = '/Users/82102/Desktop/project/yt_cr/model_test/'
 loaded_model = load_model(PATH + 'best_model.h5')
 
 PATH2 = '/Users/82102/Desktop/project/yt_cr/model/token/'
+#PATH2 = '/Users/82102/Desktop/project/yt_cr/model_test/'
 with open(PATH2+'tokenizer.pickle', 'rb') as handle:
     tokenizer = pickle.load(handle)
 
 stopwords = ['의','가','이','은','들','는','좀','잘','걍','과','도','를','으로','자','에','와','한','하다']
 max_len = 30
 
-
-#sentence = input('감성분석할 문장을 입력해 주세요.: ')
 
 contain = []
 contain_number = []
@@ -83,9 +104,6 @@ for cell in sheet:
     
     sentiment_predict(list)
     
-def Sub_comments():
-    cmrp = re.sub('[^가-힣]', '', sheet)
-    return cmrp 
 
 #긍정
 pd_contain = pd.DataFrame({'Postive' : contain})
