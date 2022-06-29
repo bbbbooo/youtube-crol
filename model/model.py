@@ -7,14 +7,14 @@ import os
 import openpyxl
 from konlpy.tag import Okt
 from tqdm import tqdm
-from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
-from keras.layers import Embedding, Dense, LSTM
+from keras.preprocessing.text import Tokenizer
+from keras.layers import Embedding, Dense, Dropout, Conv1D, GlobalMaxPooling1D
 from keras.models import Sequential
 from keras.models import load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import pickle
-
+ 
 
 # 데이터셋 다운로드. 완료하였다면 주석처리 할 것.
 #urllib.request.urlretrieve("https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt", filename="ratings_train.txt")
@@ -35,21 +35,21 @@ train_data.loc[train_data.document.isnull()]
 train_data = train_data.dropna(how = 'any') # Null 값이 존재하는 행 제거
 
 # 한글과 공백을 제외하고 모두 제거
-train_data['document'] = train_data['document'].str.replace("[^ㄱ-ㅎㅏ-ㅣ가-힣 ]","")
-train_data[:5]
+train_data['document'] = train_data['document'].str.replace("[^가-힣ㄱ-ㅎㅏ-ㅣ\\s]","")
+# train_data[:5]
 train_data['document'] = train_data['document'].str.replace('^ +', "") # white space 데이터를 empty value로 변경
 train_data['document'].replace('', np.nan, inplace=True)
 train_data = train_data.dropna(how = 'any')
 
 # test도 똑같이데이터 전처리
 test_data.drop_duplicates(subset = ['document'], inplace=True) # document 열에서 중복인 내용이 있다면 중복 제거
-test_data['document'] = test_data['document'].str.replace("[^ㄱ-ㅎㅏ-ㅣ가-힣 ]","") # 정규 표현식 수행
+test_data['document'] = test_data['document'].str.replace("[^가-힣ㄱ-ㅎㅏ-ㅣ\\s]","") # 정규 표현식 수행
 test_data['document'] = test_data['document'].str.replace('^ +', "") # 공백은 empty 값으로 변경
 test_data['document'].replace('', np.nan, inplace=True) # 공백은 Null 값으로 변경
 test_data = test_data.dropna(how='any') # Null 값 제거
 
 #불용어 처리
-stopwords = ['의','가','이','은','들','는','좀','잘','걍','과','도','를','으로','자','에','와','한','하다']
+stopwords = ['은','는','이','가','하','아','것','들','의','있','되','수','보','주','등','한','줄','를','을','에','에게','께','한테','더러','에서','에게서','한테서','로','으로','와','과','도','부터','도','만','이나','나','라도','의']
 
 okt = Okt()
 
@@ -123,37 +123,34 @@ PATH = '/Users/82102/Desktop/project/yt_cr/model/save_model/'
 if os.path.isfile(path):
     print("File exists")
 else:
-    embedding_dim = 100
-    hidden_units = 128
-
-    model = Sequential()
-    model.add(Embedding(vocab_size, embedding_dim))
-    model.add(LSTM(hidden_units))
-    model.add(Dense(8, input_dim = 4, kernel_initializer = 'uniform', activation = 'relu'))
-    model.add(Dense(1, activation='sigmoid'))
+    embedding_dim = 256 # 임베딩 벡터의 차원
+    dropout_ratio = 0.3 # 드롭아웃 비율
+    num_filters = 256 # 커널의 수
+    kernel_size = 3 # 커널의 크기
+    hidden_units = 128 # 뉴런의 수
     
     model = Sequential()
     model.add(Embedding(vocab_size, embedding_dim))
-    model.add(LSTM(hidden_units))
-    model.add(Dense(30, input_dim = 12, activation='relu'))
-    model.add(Dense(12, kernel_initializer = 'uniform', activation='relu'))
-    model.add(Dense(8, kernel_initializer = 'uniform', activation='relu'))
+    model.add(Dropout(dropout_ratio))
+    model.add(Conv1D(num_filters, kernel_size, padding='valid', activation='relu'))
+    model.add(GlobalMaxPooling1D())
+    model.add(Dense(hidden_units, activation='relu'))
+    model.add(Dropout(dropout_ratio))
     model.add(Dense(1, activation='sigmoid'))
-
-    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=5)
+    
+    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3)
     mc = ModelCheckpoint(PATH + 'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
-
+    rp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1, mode='min', min_lr= 1e-6)
+    
     model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
-    model.fit(X_train, y_train, epochs=15, callbacks=[es, mc], batch_size=512, validation_split=0.2)
+    model.fit(X_train, y_train, epochs=15, callbacks=[es,mc,rp], batch_size=256, validation_split=0.2)
+
+    
     
     PATH2 = '/Users/82102/Desktop/project/yt_cr/model/token/'
-    with open(PATH2 +'tokenizer.pickle', 'wb') as handle:
+    with open(PATH2 + 'tokenizer.pickle', 'wb') as handle:
         pickle.dump(tokenizer, handle)
 
 
 loaded_model = load_model(PATH+'best_model.h5')
 print("\n 테스트 정확도: %.4f" % (loaded_model.evaluate(X_test, y_test)[1]))
-
-
-
-

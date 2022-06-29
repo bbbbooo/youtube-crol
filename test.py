@@ -1,17 +1,22 @@
-from operator import pos
+from selenium import webdriver
+import time
+from openpyxl import Workbook
+import pandas as pd
+from selenium.webdriver.common.keys import Keys
+from bs4 import BeautifulSoup
+from sqlalchemy import null
+from googleapiclient.discovery import build
+import os
+import re
+import streamlit as st
+import pafy as pa
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
-import re
-import urllib.request
-import os
-import openpyxl as op
-import plotly.express as px
-import plotly.graph_objects as go
+from wordcloud import WordCloud
+from collections import Counter
+from PIL import Image
 from konlpy.tag import Okt
-from pyparsing import col
-from sqlalchemy import column
 from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
@@ -19,10 +24,7 @@ from keras.layers import Embedding, Dense, LSTM
 from keras.models import Sequential
 from keras.models import load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-import streamlit as st
 import pickle
-matplotlib.use('TkAgg')   
-plt.switch_backend('agg')
 
 #####
 
@@ -136,7 +138,62 @@ def Create_plot():
   ax.axis('equal')
   
   st.pyplot(fig)
+  
+def dsadsa(list_dsa):
+    data_list = []
+    for i in list_dsa:
+        data_list.append(i)
+    return str(data_list)
+
+# 긍정 워드 클라우드
+def Create_pword():
+    okt = Okt()
+    
+    pos = dsadsa(contain)
+    
+    pn = okt.nouns(pos)
+    pw = [n for n in pn if len(n) > 1]
+    pc = Counter(pw)
+    pwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    
+    pg = pwc.generate_from_frequencies(pc)
+    pwc.to_file('긍정.png')
+    pfig = plt.figure()
+    
+    plt.imshow(pg, interpolation='bilinear')
+    plt.axis('off')
+    plt.show()
+
+    st.markdown('긍정')
+    st.pyplot(pfig)
+    
+# 부정 워드 클라우드
+def Create_nword():
+    okt = Okt()
+    neg = dsadsa(contain2)
+    
+    nn = okt.nouns(neg)
+    nw = [n for n in nn if len(n) > 1]
+    nc = Counter(nw)
+    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    
+    ng = nwc.generate_from_frequencies(nc)
+    nwc.to_file('부정.png')
+    nfig = plt.figure()
+    
+    plt.imshow(ng, interpolation='bilinear')
+    plt.axis('off')
+    plt.show()
+    
+    st.markdown('부정')
+    st.pyplot(nfig)
+
+st.header('Word Cloud')
+Create_pword()
+Create_nword()
 
 # pie plot
 st.header('Pie Plot')
 Create_plot()
+
+

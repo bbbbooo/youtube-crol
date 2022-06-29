@@ -13,6 +13,9 @@ import pafy as pa
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from collections import Counter
+from PIL import Image
 from konlpy.tag import Okt
 from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
@@ -23,9 +26,11 @@ from keras.models import load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import pickle
 
+okt = Okt()
 
 # 웹 제목
 st.title("Youtube-CR")
+
 
 
 # 주소 입력
@@ -65,7 +70,7 @@ def get_thumbnail(url):
 def title_get():
     videoinfo = pa.new(url)
     video_title = videoinfo.title
-    
+
     #제목 특수기호 있으면 공백으로 치환
     rp_video_title = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…《\》]', '', video_title)
     return rp_video_title
@@ -74,7 +79,7 @@ def title_get():
 # 댓글 크롤링하여 xlsx 형태로 video_xlxs 폴더에 저장
 def Crawling():
     #api키 입력
-    api_key = 'AIzaSyDCLqtKIMyBZ82hWpUj1QcTg_glkAlk1kk'
+    api_key = 'AIzaSyBwKI6s7TsyJ1yNNvRcJ50SuhiLyNqHdSs'
     comments = list()
     api_obj = build('youtube', 'v3', developerKey=api_key)
     response = api_obj.commentThreads().list(part='snippet,replies', videoId=my_str2, maxResults=100).execute()
@@ -82,13 +87,8 @@ def Crawling():
         for item in response['items']:
             comment = item['snippet']['topLevelComment']['snippet']
             comments.append([comment['textDisplay'], comment['authorDisplayName'], comment['publishedAt'], comment['likeCount']])
-            # 대댓글 불러오기
-            # if item['snippet']['totalReplyCount'] > 0:
-            #     for reply_item in item['replies']['comments']:
-            #     d    reply = reply_item['snippet']
-            #         comments.append([reply['textDisplay'], reply['authorDisplayName'], reply['publishedAt'], reply['likeCount']])
         if 'nextPageToken' in response:
-            response = api_obj.commentThreads().list(part='snippet,replies', videoId='sWC-pp6CXpA', pageToken=response['nextPageToken'], maxResults=100).execute()
+            response = api_obj.commentThreads().list(part='snippet,replies', videoId=my_str2, pageToken=response['nextPageToken'], maxResults=100).execute()
         else:
             break
     df = pd.DataFrame(comments)
@@ -112,10 +112,12 @@ def Analysis():
     max_len = 30
 
     # 불용어
-    stopwords = ['의','가','이','은','들','는','좀','잘','걍','과','도','를','으로','자','에','와','한','하다']
-    #PATH = '/Users/82102/Desktop/project/yt_cr/model/save_model/'
+    stopwords = ['은','는','이','가','하','아','것','들','의','있','되','수','보','주','등','한','줄','를','을','에','에게','께','한테','더러','에서','에게서','한테서','로','으로','와','과','도','부터','도','만','이나','나','라도','의'
+                 , '거의', '겨우', '결국', '그런데', '즉', '참', '챗', '할때', '할뿐', '함께', '해야한다', '휴']
+    
+    #PATH = '/Users/82102/Desktop/project/yt_cr/backup/'
     PATH = '/Users/82102/Desktop/project/yt_cr/model_test/'
-    #PATH2 = '/Users/82102/Desktop/project/yt_cr/model/token/'
+    #PATH2 = '/Users/82102/Desktop/project/yt_cr/backup/'
     PATH2 = '/Users/82102/Desktop/project/yt_cr/model_test/'
     
     #모델 및 토큰 불러오기
@@ -152,20 +154,22 @@ def Analysis():
     # comment 칼럼의 각각의 데이터를 읽기
     for cell in sheet:
         list = []
+        #remove_list = ['<br>']
         output_sentence = str(cell)
-
+        
         # 댓글에 html 코드가 존재한다면...
         if "</a>" in output_sentence:
             split = output_sentence.split('</a>')
 
-            # 지우고 나서 split의 1번째 index에 '' <<(이름 모를 공백값, NULL값 아님)이 있다면 제거. 출력 안함
+            # 단순 시간만 적혀있었다면 split은 공백값이 남음. split의 1번째 index에 '' <<(이름 모를 공백값, NULL값 아님)이 있다면 제거. 출력 안함
             if split[1] == '':
                 continue
             # 없으면 list에 저장
             else:
-                split2 = split[1].replace('<br>', '')
+                for c in split:
+                    split2 = c.replace('<br>', '')
                 list.append(split2)
-
+            
         # 아무것도 해당 안되면 바로 list에 추가
         else:
             list.append(output_sentence)
@@ -173,6 +177,61 @@ def Analysis():
         # 감정 예측
         sentiment_predict(list)
 
+# 리스트를 문자열 형태로 변환 (선택)
+def list_to_str(list):
+    # 결과를 담을 공백 리스트 생성
+    data_list = []
+    # 인자로 받아온 리스트를 for문으로 돌린 후 data_list에 저장
+    for i in list:
+        data_list.append(i)
+    # 저장된 data_list를 str(문자열) 형태로 변환 후 return
+    return str(data_list)
+
+# 긍정 워드 클라우드
+def Create_pword():
+    # 리스트를 문자열 형태로 변환
+    # 1. '(요소 사이에 넣을 문자)'.join(str(변수) for 변수 in 리스트)
+    # 2. 리스트 내의 요소를 변수에 대입하고 변수를 str(문자열) 형태로 변환 
+    pos = ''.join([str(n) for n in contain])
+    
+    # (선택) 함수에 대입하여 변환
+    # pos = list_to_str(contain)
+    
+    pn = okt.nouns(pos)
+    pw = [n for n in pn if len(n) > 1]
+    pc = Counter(pw)
+    pwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    
+    pg = pwc.generate_from_frequencies(pc)
+    pfig = plt.figure()
+    
+    plt.imshow(pg, interpolation='bilinear')
+    plt.axis('off')
+    plt.show()
+
+    st.markdown('긍정')
+    st.pyplot(pfig)
+    
+# 부정 워드 클라우드
+def Create_nword():
+    neg = ''.join([str(n) for n in contain2])
+    # neg = list_to_str(contain2)
+    
+    nn = okt.nouns(neg)
+    nw = [n for n in nn if len(n) > 1]
+    nc = Counter(nw)
+    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    
+    ng = nwc.generate_from_frequencies(nc)
+    nfig = plt.figure()
+    
+    plt.imshow(ng, interpolation='bilinear')
+    plt.axis('off')
+    plt.show()
+    
+    st.markdown('부정')
+    st.pyplot(nfig)
+    
 # 원형 차트 생성
 def Create_plot():
     
@@ -195,24 +254,6 @@ def Create_plot():
   
   st.pyplot(fig)
 
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-# 다른거 눌렀을때
-def etc():
-    st.write('not yet')
-
-#-----------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-# 현재 선택한 옵션
-option = st.sidebar.selectbox(
-    '원하는 기능을 선택해주세요',
-    ['유튜브 댓글 분석', 'etc'])
-
-'현재 선택하신 옵션은 : ', option
-
-#------------------------------------------------------------------------------------------------------------
-
 
 # 댓글 분석 눌렀을때...
 def Youtube_Comments_Analysis():
@@ -221,11 +262,12 @@ def Youtube_Comments_Analysis():
         con = st.container()
         with st.spinner("검색중...."):
             time.sleep(2)
-        st.success("검색이 완료됐습니다. 감정 분석까지 약 1분이 소요됩니다.")
+        st.success("검색을 완료됐습니다. 댓글 개수이 많아질수록 시간도 증가합니다.")
 
         # 결과(입력 주소) 출력
         con.caption("검색 결과")
         con.write(f"입력하신 주소는 {str(input_url)} 입니다.")
+        
         # 썸네일 출력
         st.header('썸네일')
         st.image(get_thumbnail(my_str2))
@@ -257,11 +299,10 @@ def Youtube_Comments_Analysis():
         # 원형 차트 출력
         st.header('원형 차트')
         Create_plot()
+        
+        # 워드 클라우드 출력
+        st.header('워드 클라우드')
+        Create_pword()
+        Create_nword()
 
-# 유튜브 댓글 분석 선택하면 해당 기능 실행...
-if option == '유튜브 댓글 분석':
-    Youtube_Comments_Analysis()
-
-# 추가 기능
-if option == 'etc':
-    st.write('not yet')
+Youtube_Comments_Analysis()
