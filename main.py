@@ -1,30 +1,22 @@
-from selenium import webdriver
 import time
-from openpyxl import Workbook
 import pandas as pd
-from selenium.webdriver.common.keys import Keys
-from bs4 import BeautifulSoup
-from sqlalchemy import null
 from googleapiclient.discovery import build
 import os
 import re
 import streamlit as st
 import pafy as pa
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+from bs4 import BeautifulSoup
 from wordcloud import WordCloud
 from collections import Counter
-from PIL import Image
 from konlpy.tag import Okt
 from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
-from keras.layers import Embedding, Dense, LSTM
-from keras.models import Sequential
 from keras.models import load_model
-from keras.callbacks import EarlyStopping, ModelCheckpoint
 import pickle
+
 
 okt = Okt()
 
@@ -41,16 +33,19 @@ my_str = url.replace("https://www.youtube.com/watch?v=","")
 
 # 주소 뒤 시간이 있다면..
 def num_re():
+    # range(int) -> int는 시간값
     for i in range(10000000):
+        # &t= 코드는 고정
         if my_str.find("&t="):
+            # 찾았다면 repplace
             temp ="&t=%ss" %i
             str = my_str.replace(temp, "")
             
-            # find 결과가 false면 -1 리턴됨
+            # find 결과가 false면 -1 리턴. 변환 후엔 당연히 false가 반환
             if str.find("&t=")==-1:
                 return str
             else:
-                # 쓰레기 값
+                # 쓰레기 값. if문을 쓰기 위함
                 a=1
         else:
             # 시간 안적혀 있으면 그대로 리턴
@@ -154,30 +149,30 @@ def Analysis():
     # comment 칼럼의 각각의 데이터를 읽기
     for cell in sheet:
         list = []
-        #remove_list = ['<br>']
         output_sentence = str(cell)
         
         # 댓글에 html 코드가 존재한다면...
         if "</a>" in output_sentence:
             split = output_sentence.split('</a>')
 
-            # 단순 시간만 적혀있었다면 split은 공백값이 남음. split의 1번째 index에 '' <<(이름 모를 공백값, NULL값 아님)이 있다면 제거. 출력 안함
+            # 단순 시간만 적혀있었다면 split은 공백값이 남음. split의 1번째 index에 '' <<(이름 모를 공백값, NULL값 아님)이 있다면 출력에서 제외
             if split[1] == '':
                 continue
             # 없으면 list에 저장
             else:
                 for c in split:
-                    split2 = c.replace('<br>', '')
+                    split2 = re.sub('(<([^>]+)>)','', c)
                 list.append(split2)
             
         # 아무것도 해당 안되면 바로 list에 추가
         else:
-            list.append(output_sentence)
+            split = re.sub('(<([^>]+)>)','', output_sentence)
+            list.append(split)
 
         # 감정 예측
         sentiment_predict(list)
 
-# 리스트를 문자열 형태로 변환 (선택)
+# 리스트를 문자열 형태로 변환
 def list_to_str(list):
     # 결과를 담을 공백 리스트 생성
     data_list = []
@@ -194,11 +189,14 @@ def Create_pword():
     # 2. 리스트 내의 요소를 변수에 대입하고 변수를 str(문자열) 형태로 변환 
     pos = ''.join([str(n) for n in contain])
     
-    # (선택) 함수에 대입하여 변환
+    # 190줄을 풀어서 설명한 코드
     # pos = list_to_str(contain)
     
+    # 데이터 전처리
     pn = okt.nouns(pos)
+    # 문장의 길이가 1은 제외
     pw = [n for n in pn if len(n) > 1]
+    
     pc = Counter(pw)
     pwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
     
@@ -231,13 +229,15 @@ def Create_nword():
     
     st.markdown('부정')
     st.pyplot(nfig)
-    
+   
+   
+   
 # 원형 차트 생성
+# 1. 저장된 엑셀 파일의 comments 길이를 계산
+# 2. 긍정, 부정으로 저장된 comments의 길이를 계산, 이를 활용해 비율을 계산
+# 3. 이를 토대로 원형 차트 출력 
 def Create_plot():
-    
-  # 1. 저장된 엑셀 파일의 comments 길이를 계산
-  # 2. 긍정, 부정으로 저장된 comments의 길이를 계산, 이를 활용해 비율을 계산
-  # 3. 이를 토대로 원형 차트 출력
+
   allen = len(sheet)
   poslen = len(pd_contain)
   neglen = len(pd_contain2)
