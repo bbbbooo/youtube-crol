@@ -15,6 +15,7 @@ from keras.models import load_model
 #-----------------------------------------------------------------------------------
 
 
+
 # 업로드
 def upload():
     uploaded_file = st.file_uploader("Choose a file", type=(["mp3", "wav"]))
@@ -102,6 +103,7 @@ def Analysis():
 
 #---------------------------------------------------------------------------
 st.header('Text To Speech')
+st.container()
 upload()
 path = '/Users/82102/Desktop/project/yt_cr/audio/'
 filename = bytes_data

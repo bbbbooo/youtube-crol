@@ -96,10 +96,10 @@ def Crawling():
     
     
     
-contain = []        #긍정 cell
-contain_number =[]  #긍정 확률
-contain2 = []       #부정 cell
-contain2_number = []#부정 확률
+contain = []            #긍정 cell
+contain_number =[]      #긍정 확률
+contain2 = []           #부정 cell
+contain2_number = []    #부정 확률
 
 def Analysis():
     tokenizer = Tokenizer()
@@ -141,9 +141,9 @@ def Analysis():
 
 
     # 다른 함수에서도 쓰기 위해 global(전역변수) 선언
-    global filename, sheet
+    global sheet
     filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/%s.xlsx' % title_get())
-    sheet = filename['comment']
+    sheet = filename['comment'] 
 
 
     # comment 칼럼의 각각의 데이터를 읽기
@@ -262,7 +262,7 @@ def Youtube_Comments_Analysis():
         con = st.container()
         with st.spinner("검색중...."):
             time.sleep(2)
-        st.success("검색을 완료됐습니다. 댓글 개수이 많아질수록 시간도 증가합니다.")
+        st.success("검색을 완료됐습니다. 댓글 개수이 많아질수록 분석 시간도 증가합니다.")
 
         # 결과(입력 주소) 출력
         con.caption("검색 결과")
