@@ -15,6 +15,7 @@ from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
 from keras.models import load_model
+from PIL import Image
 import pickle
 
 
@@ -71,9 +72,11 @@ def title_get():
     return rp_video_title
 
 
-# 댓글 크롤링하여 xlsx 형태로 video_xlxs 폴더에 저장
+
+# 댓글 크롤링하여 xlsx 형태로 video_xlsx 폴더에 저장
 def Crawling():
     #api키 입력
+    
     api_key = 'AIzaSyBwKI6s7TsyJ1yNNvRcJ50SuhiLyNqHdSs'
     comments = list()
     api_obj = build('youtube', 'v3', developerKey=api_key)
@@ -88,10 +91,10 @@ def Crawling():
             break
     df = pd.DataFrame(comments)
     df = df.astype(str)
-    df.to_excel('./video_xlxs/%s.xlsx' % (title_get()), header=['comment', 'author', 'date', 'num_likes'], index=None)
+    df.to_excel('./video_xlsx/%s.xlsx' % (title_get()), header=['comment', 'author', 'date', 'num_likes'], index=None)
     path = './video_xlxs/%s.xlsx' % (title_get())
     while os.path.exists(path) :
-        df.to_excel('./video_xlxs/%s.xlsx' % (title_get()), header=['comment', 'author', 'date', 'num_likes'], index=None)
+        df.to_excel('./video_xlsx/%s.xlsx' % (title_get()), header=['comment', 'author', 'date', 'num_likes'], index=None)
         break
     
     
@@ -141,8 +144,8 @@ def Analysis():
 
 
     # 다른 함수에서도 쓰기 위해 global(전역변수) 선언
-    global sheet
-    filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlxs/%s.xlsx' % title_get())
+    global filename, sheet
+    filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlsx/%s.xlsx' % title_get())
     sheet = filename['comment'] 
 
 
@@ -205,6 +208,7 @@ def Create_pword():
     
     plt.imshow(pg, interpolation='bilinear')
     plt.axis('off')
+    plt.savefig('./result_wc/%s_positive.png' % title_get())
     plt.show()
 
     st.markdown('긍정')
@@ -225,6 +229,7 @@ def Create_nword():
     
     plt.imshow(ng, interpolation='bilinear')
     plt.axis('off')
+    plt.savefig('./result_wc/%s_negative.png' % title_get())
     plt.show()
     
     st.markdown('부정')
@@ -237,7 +242,7 @@ def Create_nword():
 # 2. 긍정, 부정으로 저장된 comments의 길이를 계산, 이를 활용해 비율을 계산
 # 3. 이를 토대로 원형 차트 출력 
 def Create_plot():
-
+  global allen, poslen, neglen
   allen = len(sheet)
   poslen = len(pd_contain)
   neglen = len(pd_contain2)
@@ -251,8 +256,11 @@ def Create_plot():
   fig, ax = plt.subplots()
   ax.pie(ratio, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
   ax.axis('equal')
+  plt.savefig('./result_image/%s_chart.png' % title_get())
   
   st.pyplot(fig)
+
+
 
 
 # 댓글 분석 눌렀을때...
@@ -288,21 +296,56 @@ def Youtube_Comments_Analysis():
         pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
         pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
         neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
-
-        # 데이터 프레임 출력
-        st.header("긍정")
-        st.write(pos_result)
-
-        st.header("부정")
-        st.write(neg_result)
+        
+        # 결과 저장
+        pos_result.to_excel('./result_video/%s_positive.xlsx' % title_get(), header=['comments', 'Probability'])
+        neg_result.to_excel('./result_video/%s_negative.xlsx' % title_get(), header=['comments', 'Probability'])
 
         # 원형 차트 출력
         st.header('원형 차트')
         Create_plot()
         
+        # 데이터 프레임 출력
+        st.header("전체 개수 : %s" % allen)
+        
+        st.header("긍정(개수 : %s)" % poslen)
+        st.write(pos_result)
+
+        st.header("부정(개수 : %s)" % neglen)
+        st.write(neg_result)
+        
         # 워드 클라우드 출력
         st.header('워드 클라우드')
         Create_pword()
         Create_nword()
+        
+    if st.sidebar.button('%s' % title_get()):
+        path = './result_image/'
+        path1 = './result_wc/'
+        if os.path.isfile(path + '%s_chart.png' % title_get()):
+            def load_chart():
+                chart = Image.open(path + '%s_chart.png' % title_get())
+                return chart
+            def load_pwc():
+                pwc = Image.open(path1 + '%s_positive.png' % title_get())
+                return pwc
+            def load_nwc():
+                nwc = Image.open(path1 + '%s_negative.png' % title_get())
+                return nwc
+            rep = pd.read_excel('./result_video/%s_positive.xlsx' % title_get())
+            ren = pd.read_excel('./result_video/%s_negative.xlsx' % title_get())
+            st.write(rep)
+            st.write(ren)
+            chart = load_chart()
+            pwc = load_pwc()
+            nwc = load_nwc()
+            st.image(chart)
+            st.image(pwc)
+            st.image(nwc)
+        else:
+            st.write("저장된 검색기록이 없습니다.")
+  
+
+    
 
 Youtube_Comments_Analysis()
