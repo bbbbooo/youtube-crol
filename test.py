@@ -26,7 +26,6 @@ from keras.models import Sequential
 from keras.models import load_model
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import pickle
-from PIL import Image
 
 #####
 
@@ -148,8 +147,19 @@ if not os.path.exists(ppath):
           fig, ax = plt.subplots()
           ax.pie(ratio, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
           ax.axis('equal')
-          plt.savefig('./result_image/%s_chart.png' % name)
-
+          plt.savefig('./result_image/chart.png')
+          if os.path.exists('./result_image/chart.png'):
+              for i in range(5):
+                sname = plt.savefig('./result_image/chart%d.png' % i)
+                file_list = os.listdir('./result_image')
+                if file_list == sname:
+                    continue
+                #string name <- /result_image/chart%d.png' % i
+                #파일이름을 가져오는 코드를 구글링해 
+                #if(가져온 파일이름 == name)
+                    #continue
+            
+                break
 
           st.pyplot(fig)
 
@@ -196,7 +206,7 @@ if not os.path.exists(ppath):
 
             plt.imshow(ng, interpolation='bilinear')
             plt.axis('off')
-            plt.savefig('./result_wc/%s_negative.png' % name)
+            plt.savefig('./result_wc/negative.png')
             plt.show()
 
             st.markdown('부정')

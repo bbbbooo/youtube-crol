@@ -19,6 +19,8 @@ from PIL import Image
 import pickle
 
 
+
+
 okt = Okt()
 
 # 웹 제목
@@ -53,6 +55,10 @@ def num_re():
             return str 
     return str
 
+
+        
+    
+    
 # 주소 뒤 시간 제거
 my_str2 = num_re()
 
@@ -261,6 +267,37 @@ def Create_plot():
   st.pyplot(fig)
 
 
+if st.sidebar.button('기록 1'):
+        path = './result_image/'
+        path1 = './result_wc/'
+        if os.path.isfile(path + '%s_chart.png' % title_get()):
+            def load_chart():
+                chart = Image.open(path + '%s_chart.png' % title_get())
+                return chart
+            def load_pwc():
+                pwc = Image.open(path1 + '%s_positive.png' % title_get())
+                return pwc
+            def load_nwc():
+                nwc = Image.open(path1 + '%s_negative.png' % title_get())
+                return nwc
+            
+            rep = pd.read_excel('./result_video/%s_positive.xlsx' % title_get())
+            ren = pd.read_excel('./result_video/%s_negative.xlsx' % title_get())
+            
+            st.write(rep)
+            st.write(ren)
+            
+            chart = load_chart()
+            pwc = load_pwc()
+            nwc = load_nwc()
+            
+            st.image(chart)
+            st.image(pwc)
+            st.image(nwc)
+        else:
+            st.write("저장된 기록이 없습니다.")
+            
+
 
 
 # 댓글 분석 눌렀을때...
@@ -298,8 +335,8 @@ def Youtube_Comments_Analysis():
         neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
         
         # 결과 저장
-        pos_result.to_excel('./result_video/%s_positive.xlsx' % title_get(), header=['comments', 'Probability'])
-        neg_result.to_excel('./result_video/%s_negative.xlsx' % title_get(), header=['comments', 'Probability'])
+        pos_result.to_excel('./result_video/positive.xlsx', header=['comments', 'Probability'])
+        neg_result.to_excel('./result_video/negative.xlsx', header=['comments', 'Probability'])
 
         # 원형 차트 출력
         st.header('원형 차트')
@@ -319,31 +356,7 @@ def Youtube_Comments_Analysis():
         Create_pword()
         Create_nword()
         
-    if st.sidebar.button('%s' % title_get()):
-        path = './result_image/'
-        path1 = './result_wc/'
-        if os.path.isfile(path + '%s_chart.png' % title_get()):
-            def load_chart():
-                chart = Image.open(path + '%s_chart.png' % title_get())
-                return chart
-            def load_pwc():
-                pwc = Image.open(path1 + '%s_positive.png' % title_get())
-                return pwc
-            def load_nwc():
-                nwc = Image.open(path1 + '%s_negative.png' % title_get())
-                return nwc
-            rep = pd.read_excel('./result_video/%s_positive.xlsx' % title_get())
-            ren = pd.read_excel('./result_video/%s_negative.xlsx' % title_get())
-            st.write(rep)
-            st.write(ren)
-            chart = load_chart()
-            pwc = load_pwc()
-            nwc = load_nwc()
-            st.image(chart)
-            st.image(pwc)
-            st.image(nwc)
-        else:
-            st.write("저장된 검색기록이 없습니다.")
+
   
 
     
