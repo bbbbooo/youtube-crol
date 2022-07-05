@@ -335,8 +335,8 @@ def Youtube_Comments_Analysis():
         neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
         
         # 결과 저장
-        pos_result.to_excel('./result_video/positive.xlsx', header=['comments', 'Probability'])
-        neg_result.to_excel('./result_video/negative.xlsx', header=['comments', 'Probability'])
+        pos_result.to_excel('./result_video/%s_positive.xlsx' % title_get(), header=['comments', 'Probability'])
+        neg_result.to_excel('./result_video/%s_negative.xlsx' % title_get(), header=['comments', 'Probability'])
 
         # 원형 차트 출력
         st.header('원형 차트')
