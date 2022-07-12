@@ -1,8 +1,11 @@
+from genericpath import exists
+from logging import exception
 import time
 import pandas as pd
 from googleapiclient.discovery import build
 import os
 import re
+from sqlalchemy import true
 import streamlit as st
 import pafy as pa
 import pandas as pd
@@ -17,9 +20,6 @@ from keras.utils import pad_sequences
 from keras.models import load_model
 from PIL import Image
 import pickle
-
-
-
 
 okt = Okt()
 
@@ -54,11 +54,7 @@ def num_re():
             # 시간 안적혀 있으면 그대로 리턴
             return str 
     return str
-
-
-        
-    
-    
+  
 # 주소 뒤 시간 제거
 my_str2 = num_re()
 
@@ -77,12 +73,9 @@ def title_get():
     rp_video_title = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…《\》]', '', video_title)
     return rp_video_title
 
-
-
 # 댓글 크롤링하여 xlsx 형태로 video_xlsx 폴더에 저장
 def Crawling():
     #api키 입력
-    
     api_key = 'AIzaSyBwKI6s7TsyJ1yNNvRcJ50SuhiLyNqHdSs'
     comments = list()
     api_obj = build('youtube', 'v3', developerKey=api_key)
@@ -102,13 +95,13 @@ def Crawling():
     while os.path.exists(path) :
         df.to_excel('./video_xlsx/%s.xlsx' % (title_get()), header=['comment', 'author', 'date', 'num_likes'], index=None)
         break
-    
-    
-    
+       
 contain = []            #긍정 cell
 contain_number =[]      #긍정 확률
 contain2 = []           #부정 cell
 contain2_number = []    #부정 확률
+contain3 = []           #중립
+contain3_number = []    #중립 확률
 
 def Analysis():
     tokenizer = Tokenizer()
@@ -140,9 +133,13 @@ def Analysis():
         score = float(model.predict(pad_new)) # 예측
         
         # 긍정적이라면 contain 리스트에 추가
-        if(score > 0.5):
+        if(score > 0.7):
             contain.append(list)
             contain_number.append(score * 100)
+        # 중립이라면 contain3 리스트에 추가
+        elif 0.5 < score < 0.7:
+            contain3.append(list)
+            contain3_number.append(score*100)
         # 부정적이라면 contain2 리스트에 추가
         else:
             contain2.append(list)
@@ -150,10 +147,9 @@ def Analysis():
 
 
     # 다른 함수에서도 쓰기 위해 global(전역변수) 선언
-    global filename, sheet
+    global filename, sheet, date, likes
     filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlsx/%s.xlsx' % title_get())
-    sheet = filename['comment'] 
-
+    sheet = filename['comment']
 
     # comment 칼럼의 각각의 데이터를 읽기
     for cell in sheet:
@@ -181,7 +177,7 @@ def Analysis():
         # 감정 예측
         sentiment_predict(list)
 
-# 리스트를 문자열 형태로 변환
+# 리스트를 문자열 형태로 변환(코드 이해용)
 def list_to_str(list):
     # 결과를 담을 공백 리스트 생성
     data_list = []
@@ -241,23 +237,44 @@ def Create_nword():
     st.markdown('부정')
     st.pyplot(nfig)
    
-   
-   
+# 중립 워드 클라우드
+def Create_aword():
+    neu = ''.join([str(n) for n in contain3])
+    # neg = list_to_str(contain2)
+    
+    nn = okt.nouns(neu)
+    nw = [n for n in nn if len(n) > 1]
+    nc = Counter(nw)
+    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250)
+    
+    ng = nwc.generate_from_frequencies(nc)
+    nfig = plt.figure()
+    
+    plt.imshow(ng, interpolation='bilinear')
+    plt.axis('off')
+    plt.savefig('./result_wc/%s_neutral.png' % title_get())
+    plt.show()
+    
+    st.markdown('중립')
+    st.pyplot(nfig)   
+
 # 원형 차트 생성
 # 1. 저장된 엑셀 파일의 comments 길이를 계산
 # 2. 긍정, 부정으로 저장된 comments의 길이를 계산, 이를 활용해 비율을 계산
 # 3. 이를 토대로 원형 차트 출력 
 def Create_plot():
-  global allen, poslen, neglen
+  global allen, poslen, neglen, neulen
   allen = len(sheet)
   poslen = len(pd_contain)
   neglen = len(pd_contain2)
+  neulen = len(pd_contain3)
   
   pos_ratio = (poslen/allen) * 100
   neg_ratio = (neglen/allen) * 100
+  neu_ratio = (neulen/allen) * 100
   
-  labels = ['Positive', 'Negative']
-  ratio = pos_ratio, neg_ratio
+  labels = ['Positive', 'Negative', 'Neutral']
+  ratio = pos_ratio, neg_ratio, neu_ratio
   
   fig, ax = plt.subplots()
   ax.pie(ratio, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
@@ -267,35 +284,45 @@ def Create_plot():
   st.pyplot(fig)
 
 
+
+
 if st.sidebar.button('기록 1'):
-        path = './result_image/'
-        path1 = './result_wc/'
-        if os.path.isfile(path + '%s_chart.png' % title_get()):
-            def load_chart():
-                chart = Image.open(path + '%s_chart.png' % title_get())
-                return chart
-            def load_pwc():
-                pwc = Image.open(path1 + '%s_positive.png' % title_get())
-                return pwc
-            def load_nwc():
-                nwc = Image.open(path1 + '%s_negative.png' % title_get())
-                return nwc
-            
-            rep = pd.read_excel('./result_video/%s_positive.xlsx' % title_get())
-            ren = pd.read_excel('./result_video/%s_negative.xlsx' % title_get())
-            
-            st.write(rep)
-            st.write(ren)
-            
-            chart = load_chart()
-            pwc = load_pwc()
-            nwc = load_nwc()
-            
-            st.image(chart)
-            st.image(pwc)
-            st.image(nwc)
-        else:
-            st.write("저장된 기록이 없습니다.")
+    path = './result_image/'
+    path1 = './result_wc/'
+    
+    if os.path.isfile(path + '%s_chart.png' % title_get()):
+        def load_chart():
+            chart = Image.open(path + '%s_chart.png' % title_get())
+            return chart
+        def load_pwc():
+            pwc = Image.open(path1 + '%s_positive.png' % title_get())
+            return pwc
+        def load_nwc():
+            nwc = Image.open(path1 + '%s_negative.png' % title_get())
+            return nwc
+        def load_awc():
+            nwc = Image.open(path1 + '%s_neutral.png' % title_get())
+            return nwc
+        
+        rep = pd.read_excel('./result_video/%s_positive.xlsx' % title_get())
+        ren = pd.read_excel('./result_video/%s_negative.xlsx' % title_get())
+        rea = pd.read_excel('./result_video/%s_neutral.xlsx' % title_get())
+        
+        st.write(rep)
+        st.write(ren)
+        st.write(rea)
+        
+        chart = load_chart()
+        pwc = load_pwc()
+        nwc = load_nwc()
+        awc = load_awc()
+        
+        st.image(chart)
+        st.image(pwc)
+        st.image(nwc)
+        st.image(awc)
+    else:
+        st.write("저장된 기록이 없습니다.")
             
 
 
@@ -311,7 +338,7 @@ def Youtube_Comments_Analysis():
 
         # 결과(입력 주소) 출력
         con.caption("검색 결과")
-        con.write(f"입력하신 주소는 {str(input_url)} 입니다.")
+        con.write("입력하신 주소는 %s 입니다." % input_url)
         
         # 썸네일 출력
         st.header('썸네일')
@@ -324,41 +351,54 @@ def Youtube_Comments_Analysis():
         Analysis()
         
         # 긍정 댓글, 확률
-        global pd_contain, pd_contain2
+        global pd_contain, pd_contain2, pd_contain3, pos_result, neg_result, neu_result
         pd_contain = pd.DataFrame({'긍정 댓글' : contain})
         pd_contain_number = pd.DataFrame({'확률': contain_number})
         pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
 
-        #부정 댓글, 확률
+        
+        
+        # 부정 댓글, 확률
         pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
         pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
         neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
         
+        # 중립 댓글, 확률
+        pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
+        pd_contain_number3 = pd.DataFrame({'확률': contain3_number})
+        neu_result = pd.concat([pd_contain3, pd_contain_number3], axis=1)
+        
+        
+        
         # 결과 저장
         pos_result.to_excel('./result_video/%s_positive.xlsx' % title_get(), header=['comments', 'Probability'])
         neg_result.to_excel('./result_video/%s_negative.xlsx' % title_get(), header=['comments', 'Probability'])
+        neu_result.to_excel('./result_video/%s_neutral.xlsx' % title_get(), header=['comments', 'Probability'])
+
 
         # 원형 차트 출력
         st.header('원형 차트')
         Create_plot()
         
-        # 데이터 프레임 출력
-        st.header("전체 개수 : %s" % allen)
         
+        # 데이터 프레임
         st.header("긍정(개수 : %s)" % poslen)
-        st.write(pos_result)
-
+        st.dataframe(pos_result)
+        
         st.header("부정(개수 : %s)" % neglen)
-        st.write(neg_result)
+        st.dataframe(neg_result)
+        
+        st.header("중립(개수 : %s)" % neulen)
+        st.dataframe(neu_result)
+        
         
         # 워드 클라우드 출력
         st.header('워드 클라우드')
         Create_pword()
         Create_nword()
-        
-
-  
-
+        Create_aword()
     
+
+
 
 Youtube_Comments_Analysis()
