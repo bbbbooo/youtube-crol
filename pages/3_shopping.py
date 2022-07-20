@@ -361,9 +361,14 @@ def Youtube_Comments_Analysis():
                 result2 = re.sub('[\[\]\'n\\\]', ' ', cell)
                 nex_list.append(result2)
 
-        pos_result = pd.concat([pd.DataFrame(pex_list), pd.DataFrame(pex_percent)], axis=1)
-        neg_result = pd.concat([pd.DataFrame(nex_list), pd.DataFrame(nex_percent)], axis=1)
+        f_pex_list = pd.DataFrame({'긍정 댓글' : pex_list})
+        f_nex_list = pd.DataFrame({'부정 댓글' : nex_list})
 
+        pos_result = pd.concat([f_pex_list, pd.DataFrame(pex_percent)], axis=1)
+        neg_result = pd.concat([f_nex_list, pd.DataFrame(nex_percent)], axis=1)
+
+        #전체 댓글
+        st.header("전체(개수 : %s)" %len(sheet))
 
         # 데이터 프레임 출력
         st.header("긍정(개수 : %s)" % len(pd_contain))
