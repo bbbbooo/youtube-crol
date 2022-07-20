@@ -20,6 +20,8 @@ from keras.utils import pad_sequences
 from keras.models import load_model
 from PIL import Image
 import pickle
+import requests
+import sqlite3 as sq
 
 okt = Okt()
 
@@ -147,7 +149,7 @@ def Analysis():
 
 
     # 다른 함수에서도 쓰기 위해 global(전역변수) 선언
-    global filename, sheet, date, likes
+    global filename, sheet
     filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlsx/%s.xlsx' % title_get())
     sheet = filename['comment']
 
@@ -284,47 +286,159 @@ def Create_plot():
   st.pyplot(fig)
 
 
+# 데이터 베이스 경로 저장
+def save_db():
+    # db 생성
+        conn = sq.connect('test.db', isolation_level=None, )
+        print('db 연동에 성공했습니다.')
 
+        # 커서 획득
+        c = conn.cursor()
+        print('커서 획득에 성공했습니다.')
 
-if st.sidebar.button('기록 1'):
-    path = './result_image/'
-    path1 = './result_wc/'
+        # 경로 지정
+        pex = './result_video/%s_positive.xlsx' % title_get()
+        nex = './result_video/%s_negative.xlsx' % title_get()
+        cpath = './result_image/%s_chart.png' % title_get()
+        ppath = './result_wc/%s_positive.png' % title_get()
+        npath = './result_wc/%s_negative.png' % title_get()
+        
+        print('파일 반환에 성공했습니다.')
+
+        # id 테이블 저장
+        c.execute('CREATE TABLE IF NOT EXISTS ipList \
+            (id integer primary key AUTOINCREMENT, vid text);')
+        c.execute('INSERT INTO ipList(vid) VALUES (?);', (title_get(),))
+        print('IP주소가 할당되었습니다.')
+
+        # data 테이블 저장
+        c.execute("CREATE TABLE IF NOT EXISTS edata \
+            (id integer primary key AUTOINCREMENT, vid text , pex text, nex text, chart text, pwc text, nwc text);")
+        print('테이블이 생성되었습니다.')
+
+        c.execute('INSERT INTO edata(vid, pex, nex, chart, pwc, nwc) VALUES (?,?,?,?,?,?);', (title_get(), pex, nex , cpath, ppath, npath))
+        print('데이터를 저장했습니다.')# 테이블 생성
+        
+        
+        
+        # ipList 테이블에서 id값 가져오기
+        c.execute('SELECT id FROM ipList;')
+        all_id = c.fetchall()
+        
+        def search_history():
+            for row in all_id:
+                # idList 테이블의 id값에 접근, id값이 5 이상일 경우 초기화
+                # id값은 검색 기록 버튼을 할당하기 위한 값. 
+                print(row)
+                int_row = int(''.join(map(str, row))) 
+                if int_row > 3:
+                    c.execute('DROP TABLE ipList;')
+                    c.execute('DROP TABLE edata;')
+                    print("데이터 삭제 완료")
+                    st.sidebar.write("검색 기록이 초기화 됐습니다.")
+                    conn.commit()
+                         
+        
+        search_history()
+        
+        conn.commit()
+        conn.close()
+
+# 버튼 클릭시 기록 호출            
+if st.sidebar.button('1'):
+    try:
+        conn = sq.connect('test.db', isolation_level=None, )
+        c = conn.cursor()
+        c.execute('SELECT pex, nex, chart, pwc, nwc FROM edata WHERE id == 1;')
+
+        # 테이블의 0,1....4번째 index 값 가져오기
+        all = c.fetchone()
+        pex = all[0]
+        nex = all[1]
+        chart = all[2]
+        pwc = all[3]
+        nwc = all[4]
+        print("데이터 베이스에서 경로를 가져오는데 성공했습니다.")
+
+        # 오픈
+        open_pex = pd.read_excel(pex)
+        open_nex = pd.read_excel(nex)
+        open_chart =  Image.open(chart)
+        open_pwc =  Image.open(pwc)
+        open_nwc =  Image.open(nwc)
+
+        # 출력
+        st.write(open_pex)
+        st.write(open_nex)
+        st.image(open_chart)
+        st.image(open_pwc)
+        st.image(open_nwc)
     
-    if os.path.isfile(path + '%s_chart.png' % title_get()):
-        def load_chart():
-            chart = Image.open(path + '%s_chart.png' % title_get())
-            return chart
-        def load_pwc():
-            pwc = Image.open(path1 + '%s_positive.png' % title_get())
-            return pwc
-        def load_nwc():
-            nwc = Image.open(path1 + '%s_negative.png' % title_get())
-            return nwc
-        def load_awc():
-            nwc = Image.open(path1 + '%s_neutral.png' % title_get())
-            return nwc
-        
-        rep = pd.read_excel('./result_video/%s_positive.xlsx' % title_get())
-        ren = pd.read_excel('./result_video/%s_negative.xlsx' % title_get())
-        rea = pd.read_excel('./result_video/%s_neutral.xlsx' % title_get())
-        
-        st.write(rep)
-        st.write(ren)
-        st.write(rea)
-        
-        chart = load_chart()
-        pwc = load_pwc()
-        nwc = load_nwc()
-        awc = load_awc()
-        
-        st.image(chart)
-        st.image(pwc)
-        st.image(nwc)
-        st.image(awc)
-    else:
-        st.write("저장된 기록이 없습니다.")
-            
+    except:
+        st.write("저장된 기록이 존재하지 않습니다.")
+    
+if st.sidebar.button('2'):
+    try:
+        conn = sq.connect('test.db', isolation_level=None, )
+        c = conn.cursor()
+        c.execute('SELECT pex, nex, chart, pwc, nwc FROM edata WHERE id == 2;')
 
+        # 테이블의 0,1....4번째 index 값 가져오기
+        all = c.fetchone()
+        pex = all[0]
+        nex = all[1]
+        chart = all[2]
+        pwc = all[3]
+        nwc = all[4]
+        print("데이터 베이스에서 경로를 가져오는데 성공했습니다.")
+
+        # 오픈
+        open_pex = pd.read_excel(pex)
+        open_nex = pd.read_excel(nex)
+        open_chart =  Image.open(chart)
+        open_pwc =  Image.open(pwc)
+        open_nwc =  Image.open(nwc)
+
+        # 출력
+        st.write(open_pex)
+        st.write(open_nex)
+        st.image(open_chart)
+        st.image(open_pwc)
+        st.image(open_nwc)
+    except:
+        st.write("저장된 기록이 존재하지 않습니다.")
+
+if st.sidebar.button('3'):
+    try:
+        conn = sq.connect('test.db', isolation_level=None, )
+        c = conn.cursor()
+        c.execute('SELECT pex, nex, chart, pwc, nwc FROM edata WHERE id == 3;')
+
+        # 테이블의 0,1....4번째 index 값 가져오기
+        all = c.fetchone()
+        pex = all[0]
+        nex = all[1]
+        chart = all[2]
+        pwc = all[3]
+        nwc = all[4]
+        print("데이터 베이스에서 경로를 가져오는데 성공했습니다.")
+
+        # 오픈
+        open_pex = pd.read_excel(pex)
+        open_nex = pd.read_excel(nex)
+        open_chart =  Image.open(chart)
+        open_pwc =  Image.open(pwc)
+        open_nwc =  Image.open(nwc)
+
+        # 출력
+        st.write(open_pex)
+        st.write(open_nex)
+        st.image(open_chart)
+        st.image(open_pwc)
+        st.image(open_nwc)
+    
+    except:
+        st.write("저장된 기록이 존재하지 않습니다.")
 
 
 # 댓글 분석 눌렀을때...
@@ -397,6 +511,10 @@ def Youtube_Comments_Analysis():
         Create_pword()
         Create_nword()
         Create_aword()
+        
+        save_db()
+        
+
     
 
 
