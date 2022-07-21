@@ -286,6 +286,7 @@ def Create_plot():
   st.pyplot(fig)
 
 
+
 # 데이터 베이스 경로 저장
 def save_db():
     # db 생성

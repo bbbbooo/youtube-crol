@@ -118,7 +118,7 @@ def Shopping():
                 while True: #한페이지에 20개의 리뷰, 마지막 리뷰에서 error발생
                     try:
                         star=d.find_element_by_xpath('%s/ul/li[1]/div[1]/span[1]' %all_shoppingmall_review).text
-                        stars.append(별)
+                        stars.append(star)
                         review=d.find_element_by_xpath(all_shoppingmall_review + '/ul/li['+str(j)+']/div[2]/div[1]').text
                         reviews.append(review)
                         if j%2==0: #화면에 2개씩 보이도록 스크롤
