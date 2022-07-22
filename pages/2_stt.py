@@ -6,6 +6,8 @@ import streamlit as st
 import pickle
 import re
 import pandas as pd
+import pyaudio
+import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
 from konlpy.tag import Okt
@@ -16,6 +18,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import manhattan_distances
 from pykospacing import Spacing
+
 
 #-----------------------------------------------------------------------------------
 
@@ -57,8 +60,8 @@ def STT():
         st.write("wav 와 mp3 형식만 호환됩니다.")
 
 
-contain = ['정말 기뻐']  # 긍정 cell
-contain2 = ['개노답']  # 부정 cell
+contain = []  # 긍정 cell
+contain2 = []  # 부정 cell
 
 
 def Analysis():
@@ -254,26 +257,66 @@ def sub(list):
     for cell in list:
         detail(str(cell))
 #---------------------------------------------------------------------------
+st.header('Speech To Text')
+option = st.radio("Select Option",('File-Upload','Record'))
+#----------------------------------------------------------------------------
 
+def file_upload():
+    path = '/Users/82102/Desktop/project/yt_cr/audio/'
+    upload()
+    global filename, filepath
+    filename = bytes_data
+    filepath = path + bytes_data
+    STT()
+    Analysis()
+    sub(contain)
+    sub(contain2)
 
-st.header('Text To Speech')
-path = '/Users/82102/Desktop/project/yt_cr/audio/'
-upload()
-filename = bytes_data
-filepath = path + bytes_data
-STT()
-Analysis()
-sub(contain)
-sub(contain2)
+    st.header('기쁨')
+    st.dataframe(p_list)
 
-st.header('기쁨')
-st.dataframe(p_list)
+    st.header('슬픔')
+    st.dataframe(n_list)
 
-st.header('슬픔')
-st.dataframe(n_list)
+    st.header('분노')
+    st.dataframe(n_list)
 
-st.header('분노')
-st.dataframe(n_list)
+    st.header('중립')
+    st.dataframe(u_list)
 
-st.header('중립')
-st.dataframe(u_list)
+#-----------------------------------------------
+
+def record():
+    if st.button('녹음'):
+        con = st.container()
+        r=sr.Recognizer()
+        with sr.Microphone() as source:
+            print("Say something!")
+            audio=r.listen(source)
+
+        try:
+            transcript=r.recognize_google(audio, language="ko-KR")
+            print("Google Speech Recognition thinks you said "+transcript)
+            con.caption("Sentence")
+            con.write(transcript)
+            
+            Analysis(transcript)
+            
+            st.write(contain)
+            st.write(contain2)
+            
+        except sr.UnknownValueError:
+            print("Google Speech Recognition could not understand audio")
+            st.write("음성을 인식하지 못했습니다.")
+        except sr.RequestError as e:
+            print("Could not request results from Google Speech Recognition service; {0}".format(e))
+            st.write("예상치 못한 오류가 발생했습니다. {0}".format(e))
+            
+        
+
+#-----------------------------------------------
+if option == 'File-Upload':
+    file_upload()
+
+if option == 'Record':
+    record()
