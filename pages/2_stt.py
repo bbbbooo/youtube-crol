@@ -61,10 +61,12 @@ def STT():
 
 
 contain = []  # 긍정 cell
+contain_number = []
 contain2 = []  # 부정 cell
+contain2_number = []
 
 
-def Analysis():
+def Analysis(sentence):
     tokenizer = Tokenizer()
     okt = Okt()
     max_len = 30
@@ -95,13 +97,15 @@ def Analysis():
 
         # 긍정적이라면 contain 리스트에 추가
         if(score > 0.5):
-            contain.append(text)
+            contain.append(sentence)
+            contain_number.append(score*100)
 
         # 부정적이라면 contain2 리스트에 추가
         else:
-            contain2.append(text)
+            contain2.append(sentence)
+            contain2_number.append((1 -score)*100)
 
-    sentiment_predict(text)
+    sentiment_predict(sentence)
 
 # 슬픔, 기쁨, 분노, 중립
 s_list = []
@@ -268,7 +272,7 @@ def file_upload():
     filename = bytes_data
     filepath = path + bytes_data
     STT()
-    Analysis()
+    Analysis(text)
     sub(contain)
     sub(contain2)
 
@@ -288,22 +292,40 @@ def file_upload():
 
 def record():
     if st.button('녹음'):
+
+        
         con = st.container()
         r=sr.Recognizer()
         with sr.Microphone() as source:
             print("Say something!")
+            st.write("음성 녹음이 활성화 됐습니다.")
             audio=r.listen(source)
+            
 
         try:
+            global transcript
             transcript=r.recognize_google(audio, language="ko-KR")
             print("Google Speech Recognition thinks you said "+transcript)
+            
             con.caption("Sentence")
             con.write(transcript)
             
             Analysis(transcript)
             
-            st.write(contain)
-            st.write(contain2)
+            pd_contain = pd.DataFrame({'긍정 문장' : contain})
+            pd_contain_number = pd.DataFrame({'확률': contain_number})
+            pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
+        
+            pd_contain2 = pd.DataFrame({'부정 문장' : contain2})
+            pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
+            neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
+            
+            st.header('긍정')
+            st.table(pos_result)
+            
+            st.header('부정')
+            st.table(neg_result)
+            
             
         except sr.UnknownValueError:
             print("Google Speech Recognition could not understand audio")
@@ -311,6 +333,11 @@ def record():
         except sr.RequestError as e:
             print("Could not request results from Google Speech Recognition service; {0}".format(e))
             st.write("예상치 못한 오류가 발생했습니다. {0}".format(e))
+
+        
+        if st.sidebar.button('파일 저장', key=2):
+            with open("./audio/"+"Record.wav", "wb") as f:
+                f.write(audio.get_wav_data())
             
         
 

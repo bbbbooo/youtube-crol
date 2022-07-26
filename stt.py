@@ -1,3 +1,4 @@
+from matplotlib.text import Text
 import speech_recognition as sr
 import os
 import sys
@@ -5,61 +6,21 @@ import streamlit as st
 import pickle
 import re
 import pandas as pd
+import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
 from konlpy.tag import Okt
 from pydub import AudioSegment
 from keras.models import load_model
-
-
-#-----------------------------------------------------------------------------------
-
-
-
-# 업로드
-def upload():
-    uploaded_file = st.file_uploader("Choose a file", type=(["mp3", "wav"]))
-    if uploaded_file is not None:
-        #bytes_data = 오디오 파일
-        global bytes_data
-        bytes_data = uploaded_file.name
-        st.success('파일을 업로드 했습니다. : {} '.format(bytes_data))
-
-
-# 음성 파일 불러와서 텍스트로 전환
-def STT():
-    r = sr.Recognizer()
-    # 파일명과 확장자 분리
-    global name
-    name, ext = os.path.splitext(filename)
-
-    # wav
-    if ext == ".wav":
-        harvard_audio = sr.AudioFile(filepath)
-        with harvard_audio as source:
-            audio = r.record(source)
-        global text
-        text = r.recognize_google(audio, language='ko-KR')
-    # mp3
-    elif ext == '.mp3':
-        mp3_sound = AudioSegment.from_mp3(filepath)
-        wav_sound = mp3_sound.export("{0}.wav".format(name), format="wav")
-        harvard_audio = sr.AudioFile(wav_sound)
-        with harvard_audio as source:
-            audio = r.record(source, duration=150)
-        text = r.recognize_google(audio, language='ko-KR')
-    # 나머지..
-    else:
-        st.write("wav 와 mp3 형식만 호환됩니다.")
-
+from operator import truediv
+from pykospacing import Spacing
 
 contain = []  # 긍정 cell
 contain_number = []
 contain2 = []  # 부정 cell
 contain2_number = []
 
-
-def Analysis():
+def Analysis(sentence):
     tokenizer = Tokenizer()
     okt = Okt()
     max_len = 30
@@ -90,29 +51,63 @@ def Analysis():
 
         # 긍정적이라면 contain 리스트에 추가
         if(score > 0.5):
-            contain.append(text)
-            contain_number.append(score * 100)
+            contain.append(sentence)
+            contain_number.append(score*100)
 
         # 부정적이라면 contain2 리스트에 추가
         else:
-            contain2.append(text)
-            contain2_number.append((1 - score) * 100)
+            contain2.append(sentence)
+            contain2_number.append((1 -score)*100)
 
-    sentiment_predict(text)
+    sentiment_predict(sentence)
 
+def record():
+    if st.button('녹음'):
+        # if st.button('종료', key=1):
+        #     raise IndexError
+        
+        con = st.container()
+        r=sr.Recognizer()
+        with sr.Microphone() as source:
+            print("Say something!")
+            st.write("음성 녹음이 활성화 됐습니다.")
+            audio=r.listen(source)
+            
 
-#---------------------------------------------------------------------------
-st.header('Text To Speech')
-st.container()
-upload()
-path = '/Users/82102/Desktop/project/yt_cr/audio/'
-filename = bytes_data
-filepath = path + bytes_data
-STT()
-Analysis()
+        try:
+            transcript=r.recognize_google(audio, language="ko-KR")
+            print("Google Speech Recognition thinks you said "+transcript)
+            
+            con.caption("Sentence")
+            con.write(transcript)
+            
+            Analysis(transcript)
+            
+            pd_contain = pd.DataFrame({'긍정 문장' : contain})
+            pd_contain_number = pd.DataFrame({'확률': contain_number})
+            pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
+        
+            pd_contain2 = pd.DataFrame({'부정 문장' : contain2})
+            pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
+            neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
+            
+            st.header('긍정')
+            st.table(pos_result)
+            
+            st.header('부정')
+            st.table(neg_result)
+            
+            
+        except sr.UnknownValueError:
+            print("Google Speech Recognition could not understand audio")
+            st.write("음성을 인식하지 못했습니다.")
+        except sr.RequestError as e:
+            print("Could not request results from Google Speech Recognition service; {0}".format(e))
+            st.write("예상치 못한 오류가 발생했습니다. {0}".format(e))
+            
+        if st.sidebar.button('파일 저장', key=2):
+            with open("./audio/"+"Record.wav", "wb") as f:
+                f.write(audio.get_wav_data())
+            
+record()
 
-st.header('긍정')
-st.write(contain, contain_number)
-
-st.header('부정')
-st.write(contain2, contain2_number)

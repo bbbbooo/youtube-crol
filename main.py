@@ -12,12 +12,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from bs4 import BeautifulSoup
 from wordcloud import WordCloud
+from sklearn.feature_extraction.text import TfidfVectorizer
+from pykospacing import Spacing
 from collections import Counter
 from konlpy.tag import Okt
 from tqdm import tqdm
 from keras.preprocessing.text import Tokenizer
 from keras.utils import pad_sequences
 from keras.models import load_model
+from sklearn.metrics.pairwise import manhattan_distances
 from PIL import Image
 import pickle
 import requests
@@ -27,8 +30,6 @@ okt = Okt()
 
 # 웹 제목
 st.title("Youtube-CR")
-
-
 
 # 주소 입력
 input_url = st.text_input(label="URL", value="")
@@ -104,6 +105,8 @@ contain2 = []           #부정 cell
 contain2_number = []    #부정 확률
 contain3 = []           #중립
 contain3_number = []    #중립 확률
+pos_emotion = []        #감정 분류
+neg_emotion = []
 
 def Analysis():
     tokenizer = Tokenizer()
@@ -115,9 +118,9 @@ def Analysis():
                  , '거의', '겨우', '결국', '그런데', '즉', '참', '챗', '할때', '할뿐', '함께', '해야한다', '휴']
     
     #PATH = '/Users/82102/Desktop/project/yt_cr/backup/'
-    PATH = '/Users/82102/Desktop/project/yt_cr/model_test/'
+    PATH = './model_test/'
     #PATH2 = '/Users/82102/Desktop/project/yt_cr/backup/'
-    PATH2 = '/Users/82102/Desktop/project/yt_cr/model_test/'
+    PATH2 = './model_test/'
     
     #모델 및 토큰 불러오기
     model = load_model(PATH + 'best_model.h5')
@@ -150,7 +153,7 @@ def Analysis():
 
     # 다른 함수에서도 쓰기 위해 global(전역변수) 선언
     global filename, sheet
-    filename = pd.read_excel('/Users/82102/Desktop/project/yt_cr/video_xlsx/%s.xlsx' % title_get())
+    filename = pd.read_excel('./video_xlsx/%s.xlsx' % title_get())
     sheet = filename['comment']
 
     # comment 칼럼의 각각의 데이터를 읽기
@@ -179,7 +182,7 @@ def Analysis():
         # 감정 예측
         sentiment_predict(list)
 
-# 리스트를 문자열 형태로 변환(코드 이해용)
+# 리스트를 문자열 형태로 변환
 def list_to_str(list):
     # 결과를 담을 공백 리스트 생성
     data_list = []
@@ -284,8 +287,6 @@ def Create_plot():
   plt.savefig('./result_image/%s_chart.png' % title_get())
   
   st.pyplot(fig)
-
-
 
 # 데이터 베이스 경로 저장
 def save_db():
@@ -442,6 +443,154 @@ if st.sidebar.button('3'):
         st.write("저장된 기록이 존재하지 않습니다.")
 
 
+def detail(senetence, num):
+        text = senetence
+        
+        text = re.sub('[-=+,#/\:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…《\》br]', '', text)
+        new_sent = text.replace(" ", '') # 띄어쓰기가 없는 문장 임의로 만들기
+        new_sent = text.replace("ㅋ",' ㅋ').replace("ㅜ",' ㅜ').replace("ㅠ",' ㅠ').replace("?",' ?').replace("ㅎ",' ㅎ')
+        
+        
+        
+        spacing = Spacing()
+        kospacing_text = spacing(new_sent)
+    
+    
+        texxt = open("./data/sad.txt","r",encoding='UTF-8')
+        lists = texxt.readlines()
+        result_sad = list_to_str(lists)
+        texxt.close()
+        #슬픔
+
+        sentence = (result_sad,kospacing_text)
+
+    
+        
+        texxt1 = open("./data/happy.txt","r",encoding='UTF-8')
+        lists1 = texxt1.readlines()
+        result_happy = list_to_str(lists1)
+        texxt1.close()
+        #기쁨
+        
+        sentence1 =(result_happy,kospacing_text)
+            
+
+        texxt2 = open("./data/anger.txt","r",encoding='UTF-8')
+        lists2 = texxt2.readlines()
+        result_anger = list_to_str(lists2)
+        texxt2.close()
+        #분노
+
+        sentence2 =(result_anger,kospacing_text)        
+        
+        texxt3 = open("./data/surprised.txt","r",encoding='UTF-8')
+        lists3 = texxt3.readlines()
+        result_surprised = list_to_str(lists3)
+        texxt3.close()
+        #놀람
+        sentence3=(result_surprised,kospacing_text)
+
+
+        # 객체 생성
+        tfidf_vectorizer = TfidfVectorizer()
+        
+
+        # 문장 벡터화 진행
+        tfidf_matrix = tfidf_vectorizer.fit_transform(sentence)
+        tfidf_matrix1 = tfidf_vectorizer.fit_transform(sentence1)
+        tfidf_matrix2 = tfidf_vectorizer.fit_transform(sentence2)
+        tfidf_matrix3 = tfidf_vectorizer.fit_transform(sentence3)
+        
+
+        # 각 단어
+        text = tfidf_vectorizer.get_feature_names()
+        
+        
+
+        # 각 단어의 벡터 값
+        idf = tfidf_vectorizer.idf_
+        
+
+        manhattan_distances(tfidf_matrix[0:1], tfidf_matrix[1:2])
+        manhattan_distances(tfidf_matrix1[0:1], tfidf_matrix1[1:2])
+        manhattan_distances(tfidf_matrix2[0:1], tfidf_matrix2[1:2])
+        manhattan_distances(tfidf_matrix3[0:1], tfidf_matrix3[1:2])
+
+
+
+
+        tokenized_doc1 = set(sentence[0].split(' '))
+        tokenized_doc2 = set(sentence[1].split(' '))
+
+        tokenized_doc3 = set(sentence1[0].split(' '))
+        tokenized_doc4 = set(sentence1[1].split(' '))
+
+        tokenized_doc5 = set(sentence2[0].split(' '))
+        tokenized_doc6 = set(sentence2[1].split(' '))
+        tokenized_doc7 = set(sentence3[0].split(' '))
+        tokenized_doc8 = set(sentence3[1].split(' '))
+        
+
+
+        union = set(tokenized_doc1).union(set(tokenized_doc2))
+        union1 = set(tokenized_doc3).union(set(tokenized_doc4))
+        union2 = set(tokenized_doc5).union(set(tokenized_doc6))
+        union3 = set(tokenized_doc7).union(set(tokenized_doc8))
+        
+
+
+        intersection = set(tokenized_doc1).intersection(set(tokenized_doc2))
+        intersection1 = set(tokenized_doc3).intersection(set(tokenized_doc4))
+        intersection2 = set(tokenized_doc5).intersection(set(tokenized_doc6))
+        intersection3 = set(tokenized_doc7).intersection(set(tokenized_doc8))
+        
+        
+        Score = len(intersection)/len(union)
+        Score1 = len(intersection1)/len(union1)
+        Score2 = len(intersection2)/len(union2)
+        Score3 = len(intersection3)/len(union3)
+        
+
+        
+        
+
+        def ORDER():
+            dict_test = {
+                '감정': ['슬픔', '기쁨', '분노', '놀람'],
+                '유사도': [Score, Score1, Score2, Score3],
+            }
+
+            df_test = pd.DataFrame(dict_test)
+            df_test = df_test.sort_values(by=['유사도'], ascending=False)
+
+            df = df_test['감정']
+            df_list = []
+            
+
+            for df_cell in df:
+                df_list.append(df_cell)   
+
+            df_finish =  pd.DataFrame({'감정' : df_list})
+
+            first = df_finish['감정']
+            list_first = first[0]
+
+            if num == 1:
+                pos_emotion.append(list_first)
+            elif num == 0:
+                neg_emotion.append(list_first)
+            else:
+                print('감정 저장 실패')
+
+
+
+        
+        ORDER()
+
+def em(list, num):
+    for cell in list:
+        detail(str(cell), num)
+
 # 댓글 분석 눌렀을때...
 def Youtube_Comments_Analysis():
     # Search 버튼 클릭 시....
@@ -462,27 +611,38 @@ def Youtube_Comments_Analysis():
         # 댓글 크롤링
         Crawling()
             
-        # 데이터 분석
+        # 데이터 분석 
         Analysis()
+
+        #감정 세분화
+        em(contain, 1)
+        em(contain2, 0)
+
+        #긍정 감정 리스트
+        pd_pos_emotion = pd.DataFrame({'감정' : pos_emotion})
         
+        #부정 감정 리스트
+        pd_neg_emotion = pd.DataFrame({'감정' : neg_emotion})
+
         # 긍정 댓글, 확률
         global pd_contain, pd_contain2, pd_contain3, pos_result, neg_result, neu_result
         pd_contain = pd.DataFrame({'긍정 댓글' : contain})
         pd_contain_number = pd.DataFrame({'확률': contain_number})
-        pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
+        pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)     #엑셀 저장용
+        pos_result2 = pd.concat([pos_result, pd_pos_emotion], axis=1)       #streamlit 출력용
 
         
         
         # 부정 댓글, 확률
         pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
         pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
-        neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
+        neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)   #엑셀 저장용
+        neg_result2 = pd.concat([neg_result, pd_neg_emotion], axis=1)       #streamlit 출력용
         
         # 중립 댓글, 확률
         pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
         pd_contain_number3 = pd.DataFrame({'확률': contain3_number})
         neu_result = pd.concat([pd_contain3, pd_contain_number3], axis=1)
-        
         
         
         # 결과 저장
@@ -498,10 +658,10 @@ def Youtube_Comments_Analysis():
         
         # 데이터 프레임
         st.header("긍정(개수 : %s)" % poslen)
-        st.dataframe(pos_result)
+        st.dataframe(pos_result2)
         
         st.header("부정(개수 : %s)" % neglen)
-        st.dataframe(neg_result)
+        st.dataframe(neg_result2)
         
         st.header("중립(개수 : %s)" % neulen)
         st.dataframe(neu_result)
@@ -515,9 +675,4 @@ def Youtube_Comments_Analysis():
         
         save_db()
         
-
-    
-
-
-
 Youtube_Comments_Analysis()
