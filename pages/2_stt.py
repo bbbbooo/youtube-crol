@@ -256,14 +256,11 @@ def detail(senetence):
         except:
             print("")
             
-            
 def sub(list):
     for cell in list:
         detail(str(cell))
 #---------------------------------------------------------------------------
 st.header('Speech To Text')
-option = st.radio("Select Option",('File-Upload','Record'))
-#----------------------------------------------------------------------------
 
 def file_upload():
     path = '/Users/82102/Desktop/project/yt_cr/audio/'
@@ -287,63 +284,3 @@ def file_upload():
 
     st.header('중립')
     st.dataframe(u_list)
-
-#-----------------------------------------------
-
-def record():
-    if st.button('녹음'):
-
-        
-        con = st.container()
-        r=sr.Recognizer()
-        with sr.Microphone() as source:
-            print("Say something!")
-            st.write("음성 녹음이 활성화 됐습니다.")
-            audio=r.listen(source)
-            
-
-        try:
-            global transcript
-            transcript=r.recognize_google(audio, language="ko-KR")
-            print("Google Speech Recognition thinks you said "+transcript)
-            
-            con.caption("Sentence")
-            con.write(transcript)
-            
-            Analysis(transcript)
-            
-            pd_contain = pd.DataFrame({'긍정 문장' : contain})
-            pd_contain_number = pd.DataFrame({'확률': contain_number})
-            pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
-        
-            pd_contain2 = pd.DataFrame({'부정 문장' : contain2})
-            pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
-            neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
-            
-            st.header('긍정')
-            st.table(pos_result)
-            
-            st.header('부정')
-            st.table(neg_result)
-            
-            
-        except sr.UnknownValueError:
-            print("Google Speech Recognition could not understand audio")
-            st.write("음성을 인식하지 못했습니다.")
-        except sr.RequestError as e:
-            print("Could not request results from Google Speech Recognition service; {0}".format(e))
-            st.write("예상치 못한 오류가 발생했습니다. {0}".format(e))
-
-        
-        if st.sidebar.button('파일 저장', key=2):
-            with open("./audio/"+"Record.wav", "wb") as f:
-                f.write(audio.get_wav_data())
-            
-        
-
-#-----------------------------------------------
-if option == 'File-Upload':
-    file_upload()
-
-if option == 'Record':
-    record()

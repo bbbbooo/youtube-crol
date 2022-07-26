@@ -23,7 +23,6 @@ from keras.models import load_model
 from sklearn.metrics.pairwise import manhattan_distances
 from PIL import Image
 import pickle
-import requests
 import sqlite3 as sq
 
 okt = Okt()
@@ -442,7 +441,6 @@ if st.sidebar.button('3'):
     except:
         st.write("저장된 기록이 존재하지 않습니다.")
 
-
 def detail(senetence, num):
         text = senetence
         
@@ -494,7 +492,6 @@ def detail(senetence, num):
         # 객체 생성
         tfidf_vectorizer = TfidfVectorizer()
         
-
         # 문장 벡터화 진행
         tfidf_matrix = tfidf_vectorizer.fit_transform(sentence)
         tfidf_matrix1 = tfidf_vectorizer.fit_transform(sentence1)
@@ -508,7 +505,7 @@ def detail(senetence, num):
         
 
         # 각 단어의 벡터 값
-        idf = tfidf_vectorizer.idf_
+        # idf = tfidf_vectorizer.idf_
         
 
         manhattan_distances(tfidf_matrix[0:1], tfidf_matrix[1:2])

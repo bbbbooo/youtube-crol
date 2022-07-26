@@ -67,19 +67,19 @@ def Analysis():
         elif(0.5> score > 0.4):
             st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
             streamlit_neutrality()
-            st.warning("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 중립적인 문장입니다.\n".format(score * 100))
+            st.warning("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 중립적인 문장입니다.\n".format((1 - score) * 100))
             st.balloons()
             detail()
         elif(0.4> score > 0.3):
             st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
             streamlit_negative_1()
-            st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 부정적인 문장입니다.\n".format(score * 100))
+            st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 부정적인 문장입니다.\n".format((1 - score) * 100))
             st.snow()
             detail()
         else:
             st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
             streamlit_negative_2()
-            st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 강한 부정의 문장입니다.\n".format(score * 100))
+            st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 강한 부정의 문장입니다.\n".format((1 - score) * 100))
             st.snow()
             detail()
 
@@ -266,22 +266,30 @@ def detail():
         
         st.table(result)
 
+        # set을 문자열로
+        def Set_to_String(set):
+            sentence = str(set)
+            sentence2 = sentence.replace("{","").replace("}","").replace("'","")
+            return sentence2
+        
         if Score > 0:
             st.warning("공포와 관련된 단어")
-            st.info(intersection)
+            st.info(Set_to_String(intersection))
         if Score2 > 0:
             st.success("기쁨과 관련된 단어")
-            st.info(intersection2)
+            st.info(Set_to_String(intersection2))
         if Score3 > 0:
             st.error("분노와 관련된 단어")
-            st.info(intersection3)
+            st.info(Set_to_String(intersection3))
         if Score4 > 0:
             st.success("사랑과 관련된 단어")
-            st.info(intersection4)
+            st.info(Set_to_String(intersection4))
         if Score6 > 0:
             st.warning("슬픔과 관련된 단어")
-            st.info(intersection6)
+            st.info(Set_to_String(intersection6))
 
+        
+        
 
     ORDER()
     
@@ -335,7 +343,6 @@ def streamlit_negative_2():
 ##############################################################STT
 def Audio():
     # microphone에서 auido source를 생성합니다
-
     r = sr.Recognizer()
     with sr.Microphone() as source:
         st.success("음성녹음 시작")
@@ -364,15 +371,19 @@ st.markdown("<h1 style='text-align: center; '>테스트 심리 분석</h1>", uns
 
 streamlit_title()
 
-with st.form('form', clear_on_submit=True):
-    st.success("아래에 내용을 입력해주세요")
-    user_input = st.text_input('')
-    st.form_submit_button('전송')
+option = st.sidebar.selectbox("선택", ('MIC', 'Upload'))
 
-if st.form_submit_button and user_input:
-    st.info(user_input)
-    Analysis()
+# with st.form('form', clear_on_submit=True):
+#     st.success("아래에 내용을 입력해주세요")
+#     user_input = st.text_input('')
+#     st.form_submit_button('전송')
 
-# with st.form('stt', clear_on_submit=True):
-#     st.success("아래에 마이크를 입력해주세요")
-#     start()
+if option == 'MIC':
+    with st.form('stt', clear_on_submit=True):
+        st.success("아래에 마이크를 입력해주세요")
+        start()
+
+if option == 'Upload':
+    st.write('테스트')
+
+
