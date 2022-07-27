@@ -611,22 +611,22 @@ def Youtube_Comments_Analysis():
         # 데이터 분석 
         Analysis()
 
-        #감정 세분화
-        em(contain, 1)
-        em(contain2, 0)
+        # 감정 세분화
+        # em(contain, 1)
+        # em(contain2, 0)
 
-        #긍정 감정 리스트
-        pd_pos_emotion = pd.DataFrame({'감정' : pos_emotion})
+        # 긍정 감정 리스트
+        # pd_pos_emotion = pd.DataFrame({'감정' : pos_emotion})
         
-        #부정 감정 리스트
-        pd_neg_emotion = pd.DataFrame({'감정' : neg_emotion})
+        # 부정 감정 리스트
+        # pd_neg_emotion = pd.DataFrame({'감정' : neg_emotion})
 
         # 긍정 댓글, 확률
         global pd_contain, pd_contain2, pd_contain3, pos_result, neg_result, neu_result
         pd_contain = pd.DataFrame({'긍정 댓글' : contain})
         pd_contain_number = pd.DataFrame({'확률': contain_number})
         pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)     #엑셀 저장용
-        pos_result2 = pd.concat([pos_result, pd_pos_emotion], axis=1)       #streamlit 출력용
+        # pos_result2 = pd.concat([pos_result, pd_pos_emotion], axis=1)       #streamlit 출력용
 
         
         
@@ -634,7 +634,7 @@ def Youtube_Comments_Analysis():
         pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
         pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
         neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)   #엑셀 저장용
-        neg_result2 = pd.concat([neg_result, pd_neg_emotion], axis=1)       #streamlit 출력용
+        # neg_result2 = pd.concat([neg_result, pd_neg_emotion], axis=1)       #streamlit 출력용
         
         # 중립 댓글, 확률
         pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
@@ -655,10 +655,10 @@ def Youtube_Comments_Analysis():
         
         # 데이터 프레임
         st.header("긍정(개수 : %s)" % poslen)
-        st.dataframe(pos_result2)
+        st.dataframe(pos_result)
         
         st.header("부정(개수 : %s)" % neglen)
-        st.dataframe(neg_result2)
+        st.dataframe(neg_result)
         
         st.header("중립(개수 : %s)" % neulen)
         st.dataframe(neu_result)

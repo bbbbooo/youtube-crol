@@ -22,9 +22,13 @@ import speech_recognition as sr
 from nltk.corpus import stopwords 
 from nltk.tokenize import word_tokenize 
 from konlpy.tag import Kkma
+import os
+from pydub import AudioSegment
 
+contain = []  # 긍정 cell
+contain2 = []  # 부정 cell
 
-def Analysis():
+def Analysis(num):
     tokenizer = Tokenizer()
     okt = Okt()
     max_len = 30
@@ -44,7 +48,7 @@ def Analysis():
         tokenizer = pickle.load(handle)
 
     # 감정 예측
-    def sentiment_predict(new_sentence):
+    def sentiment_predict(new_sentence, num):
         new_sentence = re.sub(r'[^ㄱ-ㅎㅏ-ㅣ가-힣 ]', '', str(new_sentence))
         new_sentence = okt.morphs(new_sentence, stem=True)  # 토큰화
         new_sentence = [word for word in new_sentence if not word in stopwords]  # 불용어 제거
@@ -52,38 +56,78 @@ def Analysis():
         pad_new = pad_sequences(encoded, maxlen=max_len)  # 패딩
         score = float(model.predict(pad_new))  # 예측
 
-        if(score > 0.6):
-            st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
-            streamlit_positive_1()
-            st.success("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 강한 긍정의 문장입니다.\n".format(score * 100))
-            st.balloons()
-            detail()
-        elif(0.6> score > 0.5):
-            st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
-            streamlit_positive_2()
-            st.success("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 긍정적인 문장입니다.\n".format(score * 100))
-            st.balloons()
-            detail()
-        elif(0.5> score > 0.4):
-            st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
-            streamlit_neutrality()
-            st.warning("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 중립적인 문장입니다.\n".format((1 - score) * 100))
-            st.balloons()
-            detail()
-        elif(0.4> score > 0.3):
-            st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
-            streamlit_negative_1()
-            st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 부정적인 문장입니다.\n".format((1 - score) * 100))
-            st.snow()
-            detail()
-        else:
-            st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
-            streamlit_negative_2()
-            st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 강한 부정의 문장입니다.\n".format((1 - score) * 100))
-            st.snow()
-            detail()
+        
+        # 마이크 입력
+        if num == 0:
+            if(score > 0.6):
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_positive_1()
+                st.success("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 강한 긍정의 문장입니다.\n".format(score * 100))
+                st.balloons()
+                detail(0)
+            elif(0.6> score > 0.5):
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_positive_2()
+                st.success("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 긍정적인 문장입니다.\n".format(score * 100))
+                st.balloons()
+                detail(0)
+            elif(0.5> score > 0.4):
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_neutrality()
+                st.warning("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 중립적인 문장입니다.\n".format(score * 100))
+                st.balloons()
+                detail(0)
+            elif(0.4> score > 0.3):
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_negative_1()
+                st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 부정적인 문장입니다.\n".format(score * 100))
+                st.snow()
+                detail(0)
+            else:
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_negative_2()
+                st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 강한 부정의 문장입니다.\n".format(score * 100))
+                st.snow()
+                detail(0)
+        
+        # 파일 업로드
+        if num == 1:
+            if(score > 0.6):
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_positive_1()
+                st.success("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 강한 긍정의 문장입니다.\n".format(score * 100))
+                st.balloons()
+                detail(1)
+            elif(0.6> score > 0.5):
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_positive_2()
+                st.success("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 긍정적인 문장입니다.\n".format(score * 100))
+                st.balloons()
+                detail(1)
+            elif(0.5> score > 0.4):
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_neutrality()
+                st.warning("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 중립적인 문장입니다.\n".format(score * 100))
+                st.balloons()
+                detail(1)
+            elif(0.4> score > 0.3):
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_negative_1()
+                st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 부정적인 문장입니다.\n".format(score* 100))
+                detail(1)
+            else:
+                st.markdown("<h2 style='text-align: center; '>분석 결과</h2>", unsafe_allow_html=True)
+                streamlit_negative_2()
+                st.error("전체 문장의 분석 결과, 감정 점수 {:.2f}점 으로 강한 부정의 문장입니다.\n".format(score* 100))
+                detail(1)
 
-    sentiment_predict(user_input)
+    # num = 0 이면 실시간 녹음
+    if num == 0:
+        sentiment_predict(user_input, num)
+    
+    # num = 1 이면 파일 업로드
+    if num == 1:
+        sentiment_predict(wb_text, num)
 
 
  #리스트 문자열로 변환
@@ -94,9 +138,13 @@ def listToString(str_list):
     return result.strip()
 
 
-def detail():
-
-    text = user_input
+def detail(num):
+    if num == 0:
+        text = user_input
+        st.info(user_input)
+    if num == 1:
+        text = wb_text
+        st.info(wb_text)
 
     text = re.sub('[-=+,#/\?:^$.@*\"※~&%ㆍ!』\\‘|\(\)\[\]\<\>`\'…《\》]', '', text)
     new_sent = text.replace(" ", '') # 띄어쓰기가 없는 문장 임의로 만들기
@@ -129,7 +177,7 @@ def detail():
     #         text_data.append(text)
 
     good_text = " ".join(ex_pos)
-    st.info(good_text)
+    # st.info(good_text)
 
     ###################################################################
 
@@ -338,9 +386,10 @@ def streamlit_negative_2():
 
 
 
+##############################################################
 
+# 마이크 입력
 
-##############################################################STT
 def Audio():
     # microphone에서 auido source를 생성합니다
     r = sr.Recognizer()
@@ -362,9 +411,66 @@ def start():
         if st.form_submit_button and user_input:
             st.markdown("<h1 style='text-align: center; '>작성 내용</h1>", unsafe_allow_html=True)
             st.info(user_input)
-            Analysis()
+            # 기능에 따라 분류하기 위함
+            Analysis(0)
 ##############################################################
 
+# 파일 업로드
+
+def upload():
+    uploaded_file = st.file_uploader("파일을 선택해주세요", type=(["mp3", "wav"]))
+    if uploaded_file is not None:
+        #bytes_data = 오디오 파일
+        global bytes_data
+        bytes_data = uploaded_file.name
+        st.success('파일을 업로드 했습니다. : {} '.format(bytes_data))
+
+
+# 음성 파일 불러와서 텍스트로 전환
+def STT():
+    r = sr.Recognizer()
+    # 파일명과 확장자 분리
+    global name
+    name, ext = os.path.splitext(filename)
+
+    # wav
+    if ext == ".wav":
+        harvard_audio = sr.AudioFile(filepath)
+        with harvard_audio as source:
+            audio = r.record(source)
+        global wb_text
+        wb_text = r.recognize_google(audio, language='ko-KR')
+    # mp3. 업로드시 wav로 변환
+    elif ext == '.mp3':
+        mp3_sound = AudioSegment.from_mp3(filepath)
+        wav_sound = mp3_sound.export("{0}.wav".format(name), format="wav")
+        harvard_audio = sr.AudioFile(wav_sound)
+        with harvard_audio as source:
+            audio = r.record(source, duration=150)
+        text = r.recognize_google(audio, language='ko-KR')
+    # 나머지..
+    else:
+        st.write("wav 와 mp3 형식만 호환됩니다.")
+
+def sub(list):
+    for cell in list:
+        detail(str(cell))
+
+def file_upload():
+    path = '/Users/82102/Desktop/project/yt_cr/audio/'
+    upload()
+    global filename, filepath
+    filename = bytes_data
+    filepath = path + bytes_data
+    STT()
+    Analysis(1)
+    # Analysis(text)
+    # sub(contain)
+    # sub(contain2)
+
+
+
+##############################################################
 
 
 st.markdown("<h1 style='text-align: center; '>테스트 심리 분석</h1>", unsafe_allow_html=True)
@@ -384,6 +490,10 @@ if option == 'MIC':
         start()
 
 if option == 'Upload':
-    st.write('테스트')
+    try:
+        file_upload()
+    except:
+        # 오류 메세지 없애는 쓰레기 코드
+        a=1
 
 
