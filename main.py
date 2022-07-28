@@ -607,7 +607,6 @@ def em(list, num):
 def Youtube_Comments_Analysis():
 # Search 버튼 클릭 시....
     # Search 버튼 클릭 시....
-
     st.success("검색을 완료하였습니다. 댓글 개수가 많아질수록, 분석 시간이 증가합니다.")
 
 
