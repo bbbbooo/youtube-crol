@@ -179,7 +179,8 @@ contain = []            #긍정 cell
 contain_number =[]      #긍정 확률
 contain2 = []           #부정 cell
 contain2_number = []    #부정 확률
-
+contain3 = []           
+contain3_number = []    
 #감정분석
 def Analysis():
     tokenizer = Tokenizer()
@@ -208,9 +209,13 @@ def Analysis():
         score = float(model.predict(pad_new)) # 예측
         
         # 긍정적이라면 contain 리스트에 추가
-        if(score > 0.5):
+        if(score > 0.65):
             contain.append(list)
             contain_number.append(score * 100)
+        # 중립이라면 contain3 리스트에 추가
+        elif 0.5 < score < 0.65:
+            contain3.append(list)
+            contain3_number.append(score*100)
         # 부정적이라면 contain2 리스트에 추가
         else:
             contain2.append(list)
@@ -236,20 +241,23 @@ def Analysis():
 
 
 def Create_plot():
-
+  global allen, poslen, neglen, neulen
   allen = len(sheet)
   poslen = len(pd_contain)
   neglen = len(pd_contain2)
+  neulen = len(pd_contain3)
   
   pos_ratio = (poslen/allen) * 100
   neg_ratio = (neglen/allen) * 100
+  neu_ratio = (neulen/allen) * 100
   
-  labels = ['Positive', 'Negative']
-  ratio = pos_ratio, neg_ratio
+  labels = ['Positive', 'Negative', 'Neutral']
+  ratio = pos_ratio, neg_ratio, neu_ratio
   
   fig, ax = plt.subplots()
   ax.pie(ratio, labels=labels, autopct='%1.1f%%', shadow=True, startangle=90)
   ax.axis('equal')
+  plt.savefig('./result_image/%s_chart.png' % title_get())
   
   st.pyplot(fig)
 
@@ -301,8 +309,28 @@ def Create_nword():
     st.error('부정')
     st.pyplot(nfig)
 
+# 중립 워드 클라우드
+def Create_aword():
+    neu = ''.join([str(n) for n in contain3])
+    
+    ne = okt.nouns(neu)
+    nw = [n for n in ne if len(n) > 1]
+    nc = Counter(nw)
+    nwc = WordCloud(font_path='malgun', width=400, height=400, scale=2.0, max_font_size=250, background_color='white')
+    
+    ng = nwc.generate_from_frequencies(nc)
+    nfig = plt.figure()
+    
+    plt.imshow(ng, interpolation='bilinear')
+    plt.axis('off')
+    plt.savefig('./result_wc/%s_neutral.png' % title_get())
+    plt.show()
+    
+    st.warning("중립")
+    st.pyplot(nfig)   
+
 # 댓글 분석 눌렀을때...
-def Youtube_Comments_Analysis():
+def Naver_Shopping_Analysis():
     # Search 버튼 클릭 시....
 
     st.success("검색을 완료됐습니다. 댓글 개수가 많아질수록 분석 시간도 증가합니다.")
@@ -317,7 +345,7 @@ def Youtube_Comments_Analysis():
     Analysis()
 
     # 긍정 댓글, 확률
-    global pd_contain, pd_contain2
+    global pd_contain, pd_contain2, pd_contain3
 
     pd_contain = pd.DataFrame({'긍정 댓글' : contain})
     pd_contain_number = pd.DataFrame({'확률': contain_number})
@@ -327,14 +355,23 @@ def Youtube_Comments_Analysis():
     pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
     pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
     neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
+    
+    # 중립 댓글, 확률
+    pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
+    pd_contain_number3 = pd.DataFrame({'확률': contain3_number})
+    neu_result = pd.concat([pd_contain3, pd_contain_number3], axis=1)
 
     #긍정, 부정 엑셀파일로 저장
     pos_result.to_excel('./shop_emotion/%s_positive.xlsx' % title_get())
     neg_result.to_excel('./shop_emotion/%s_negative.xlsx' % title_get())
+    neu_result.to_excel('./shop_emotion/%s_neutral.xlsx' % title_get())
+
 
     #긍정, 부정 파일 불러오기
     open_pex = pd.read_excel("./shop_emotion/%s_positive.xlsx" % title_get())
-    open_nex = pd.read_excel("./shop_emotion/%s_negative.xlsx" % title_get()) 
+    open_nex = pd.read_excel("./shop_emotion/%s_negative.xlsx" % title_get())
+    open_neu = pd.read_excel("./shop_emotion/%s_neutral.xlsx" % title_get()) 
+
 
     #긍정 열 값 가져오기
     pex_text = open_pex['긍정 댓글']
@@ -345,22 +382,36 @@ def Youtube_Comments_Analysis():
     nex_text = open_nex['부정 댓글']
     nex_percent = open_nex['확률']
     nex_list =[]
+    
+    #중립 열 값 가져오기
+    neu_text = open_neu['중립 댓글']
+    neu_percent = open_neu['확률']
+    neu_list =[]
 
     #DB 긍정 댓글 중 ['']  삭제
     for cell in pex_text:
-            result = re.sub('[\[\]\'n\\\]', ' ', cell)
-            pex_list.append(result)
+        result = re.sub('[\[\]\'n\\\]', ' ', cell)
+        pex_list.append(result)
 
     #DB 부정 댓글 중 [''] 삭제
     for cell in nex_text:
-            result2 = re.sub('[\[\]\'n\\\]', ' ', cell)
-            nex_list.append(result2)
+        result2 = re.sub('[\[\]\'n\\\]', ' ', cell)
+        nex_list.append(result2)
+            
+    #DB 중립 댓글 중 [''] 삭제
+    for cell in neu_text:
+        result3 = re.sub('[\[\]\'n\\\]', ' ', cell)
+        neu_list.append(result3)
 
     f_pex_list = pd.DataFrame({'긍정 댓글' : pex_list})
     f_nex_list = pd.DataFrame({'부정 댓글' : nex_list})
+    f_neu_list = pd.DataFrame({'부정 댓글' : neu_list})
+
 
     pos_result = pd.concat([f_pex_list, pd.DataFrame(pex_percent)], axis=1)
     neg_result = pd.concat([f_nex_list, pd.DataFrame(nex_percent)], axis=1)
+    neu_result = pd.concat([f_neu_list, pd.DataFrame(neu_percent)], axis=1)
+
 
     #전체 댓글
     st.info("전체 리뷰(개수 : %s)" %len(sheet))
@@ -371,6 +422,9 @@ def Youtube_Comments_Analysis():
     
     st.error("부정 리뷰(개수 : %s)" % len(pd_contain2))
     st.table(neg_result)
+    
+    st.warning("중립 리뷰(개수 : %s)" % len(pd_contain3))
+    st.table(neu_result)
 
     st.info("")
     # 원형 차트 출력 
@@ -382,6 +436,7 @@ def Youtube_Comments_Analysis():
     st.markdown("<h3 style='text-align: center; color: skyblue; '>워드 클라우드</h3>", unsafe_allow_html=True)
     Create_pword()
     Create_nword()
+    Create_aword()
     
 ###################################################################CSS 함수
 def load_lottieurl(url: str):
@@ -414,7 +469,6 @@ st.markdown("<h3 style='text-align: center; '>쇼핑 평점 분석</h3>", unsafe
 
 # 주소 입력
 with st.form('main', clear_on_submit=True):
-    st.success("Google Chrome 이 실행되어도 당황하지 마세요! 크롤링의 일부입니다.")
     input_url = st.text_input(label="URL", value="")
     url=input_url
     st.form_submit_button('분석')
@@ -423,4 +477,4 @@ with st.form('main', clear_on_submit=True):
 if st.form_submit_button and url:
     with st_lottie_spinner(lottie_search, key="search", height=300):
         time.sleep(2)
-    Youtube_Comments_Analysis()
+    Naver_Shopping_Analysis()
