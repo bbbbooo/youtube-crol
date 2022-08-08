@@ -25,8 +25,6 @@ from konlpy.tag import Kkma
 import os
 from pydub import AudioSegment
 
-contain = []
-contain2 = []
 
 def Analysis(num):
     tokenizer = Tokenizer()

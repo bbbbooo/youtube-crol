@@ -23,7 +23,6 @@ from keras.preprocessing.text import Tokenizer
 # from keras.preprocessing.sequence import pad_sequences
 from keras.utils import pad_sequences
 from keras.models import load_model
-from sklearn.metrics.pairwise import manhattan_distances
 from PIL import Image
 import pickle
 import sqlite3 as sq
@@ -132,11 +131,11 @@ def Analysis():
         score = float(model.predict(pad_new)) # 예측
         
         # 긍정적이라면 contain 리스트에 추가
-        if(score > 0.7):
+        if(score > 0.65):
             contain.append(list)
             contain_number.append(score * 100)
         # 중립이라면 contain3 리스트에 추가
-        elif 0.5 < score < 0.7:
+        elif 0.5 < score < 0.65:
             contain3.append(list)
             contain3_number.append(score*100)
         # 부정적이라면 contain2 리스트에 추가

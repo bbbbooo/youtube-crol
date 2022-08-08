@@ -35,7 +35,7 @@ warnings.filterwarnings('ignore')
 from streamlit_lottie import st_lottie
 from streamlit_lottie import st_lottie_spinner
 import requests
-
+import math
 
 okt = Okt()
 
@@ -53,7 +53,22 @@ def title_get():
     shop_title = a[0]
 
     return shop_title
+
+#평점 가져오기
+def grade_get():
+    title_url = url
+    response = requests.get(title_url)
+    soup = BeautifulSoup(response.text,"html.parser")
     
+    grade = soup.find('body').find('div', {'class':'top_grade__3jjdl'})
+
+    grade_list=[]
+    for grade_tag in grade:
+        grade_list.append(grade_tag.text)
+    
+    shop_grade = grade_list[1]
+
+    return shop_grade
 
 def Shopping():
     for a in range(4,7):
@@ -180,7 +195,9 @@ contain_number =[]      #긍정 확률
 contain2 = []           #부정 cell
 contain2_number = []    #부정 확률
 contain3 = []           
-contain3_number = []    
+contain3_number = []
+star_score = []
+
 #감정분석
 def Analysis():
     tokenizer = Tokenizer()
@@ -208,18 +225,22 @@ def Analysis():
         pad_new = pad_sequences(encoded, maxlen = max_len) # 패딩
         score = float(model.predict(pad_new)) # 예측
         
-        # 긍정적이라면 contain 리스트에 추가
+        # 긍정적이라면 contain 리스트에 추가. 이후 조건문에 star_score 리스트에 별점을 추가
         if(score > 0.65):
             contain.append(list)
-            contain_number.append(score * 100)
+            contain_number.append(score * 5)
+            star_score.append(round(score * 5))
         # 중립이라면 contain3 리스트에 추가
         elif 0.5 < score < 0.65:
             contain3.append(list)
-            contain3_number.append(score*100)
+            contain3_number.append(score * 5)
+            star_score.append(score * 5)
         # 부정적이라면 contain2 리스트에 추가
         else:
             contain2.append(list)
-            contain2_number.append( (1 - score) * 100)
+            contain2_number.append(score * 5)
+            star_score.append(score * 5)
+
 
 
     # # 다른 함수에서도 쓰기 위해 global(전역변수) 선언
@@ -329,6 +350,62 @@ def Create_aword():
     st.warning("중립")
     st.pyplot(nfig)   
 
+# 실제 평점
+def Real_grade():
+    star_grade = int(float(grade_get()))
+    
+    if star_grade == 5:
+        streamlit_5star()
+        st.info("실제 평점 : %s" % grade_get())
+        
+    elif 4 <= star_grade < 5:
+        streamlit_4star()
+        st.info("실제 평점 : %s" % grade_get())
+        
+    elif 3 <= star_grade < 4:
+        streamlit_3star()
+        st.info("실제 평점 : %s" % grade_get())
+        
+    elif 2 <= star_grade < 3:
+        streamlit_2star()
+        st.info("실제 평점 : %s" % grade_get())
+        
+    elif 1 <= star_grade < 2:
+        streamlit_1star()
+        st.info("실제 평점 : %s" % grade_get())
+        
+    else:
+        st.info("실제 평점 : %s" % grade_get())
+
+# 예측 평점
+def Predict_grade():
+    stars = int(sum(star_score))/len(sheet)
+    int_stars = int(stars)
+    
+    if int_stars == 5:
+        streamlit_5star()
+        st.info("예측 평점 : %.1f" % stars)
+        
+    elif 4 <= int_stars < 5:
+        streamlit_4star()
+        st.info("예측 평점 : %.1f" % stars)
+        
+    elif 3 <= int_stars < 4:
+        streamlit_3star()
+        st.info("예측 평점 : %.1f" % stars)
+        
+    elif 2 <= int_stars < 3:
+        streamlit_2star()
+        st.info("예측 평점 : %.1f" % stars)
+        
+    elif 1 <= int_stars < 2:
+        streamlit_1star()
+        st.info("예측 평점 : %.1f" % stars)
+        
+    else:
+        st.info("실제 평점 : %.1f" % stars)
+
+
 # 댓글 분석 눌렀을때...
 def Naver_Shopping_Analysis():
     # Search 버튼 클릭 시....
@@ -348,17 +425,17 @@ def Naver_Shopping_Analysis():
     global pd_contain, pd_contain2, pd_contain3
 
     pd_contain = pd.DataFrame({'긍정 댓글' : contain})
-    pd_contain_number = pd.DataFrame({'확률': contain_number})
+    pd_contain_number = pd.DataFrame({'평점': contain_number})
     pos_result = pd.concat([pd_contain, pd_contain_number], axis=1)
 
     #부정 댓글, 확률
     pd_contain2 = pd.DataFrame({'부정 댓글' : contain2})
-    pd_contain_number2 = pd.DataFrame({'확률': contain2_number})
+    pd_contain_number2 = pd.DataFrame({'평점': contain2_number})
     neg_result = pd.concat([pd_contain2, pd_contain_number2], axis=1)
     
     # 중립 댓글, 확률
     pd_contain3 = pd.DataFrame({'중립 댓글' : contain3})
-    pd_contain_number3 = pd.DataFrame({'확률': contain3_number})
+    pd_contain_number3 = pd.DataFrame({'평점': contain3_number})
     neu_result = pd.concat([pd_contain3, pd_contain_number3], axis=1)
 
     #긍정, 부정 엑셀파일로 저장
@@ -375,17 +452,17 @@ def Naver_Shopping_Analysis():
 
     #긍정 열 값 가져오기
     pex_text = open_pex['긍정 댓글']
-    pex_percent = open_pex['확률']
+    pex_percent = open_pex['평점']
     pex_list =[]
 
     #부정 열 값 가져오기
     nex_text = open_nex['부정 댓글']
-    nex_percent = open_nex['확률']
+    nex_percent = open_nex['평점']
     nex_list =[]
     
     #중립 열 값 가져오기
     neu_text = open_neu['중립 댓글']
-    neu_percent = open_neu['확률']
+    neu_percent = open_neu['평점']
     neu_list =[]
 
     #DB 긍정 댓글 중 ['']  삭제
@@ -403,19 +480,30 @@ def Naver_Shopping_Analysis():
         result3 = re.sub('[\[\]\'n\\\]', ' ', cell)
         neu_list.append(result3)
 
-    f_pex_list = pd.DataFrame({'긍정 댓글' : pex_list})
-    f_nex_list = pd.DataFrame({'부정 댓글' : nex_list})
-    f_neu_list = pd.DataFrame({'부정 댓글' : neu_list})
-
+    f_pex_list = pd.DataFrame({'긍정 리뷰' : pex_list})
+    f_nex_list = pd.DataFrame({'부정 리뷰' : nex_list})
+    f_neu_list = pd.DataFrame({'중립 리뷰' : neu_list})
+    
 
     pos_result = pd.concat([f_pex_list, pd.DataFrame(pex_percent)], axis=1)
+    pos_result = pos_result.style.set_precision(1)
+    
     neg_result = pd.concat([f_nex_list, pd.DataFrame(nex_percent)], axis=1)
+    neg_result = neg_result.style.set_precision(1)
+    
     neu_result = pd.concat([f_neu_list, pd.DataFrame(neu_percent)], axis=1)
+    neu_result = neu_result.style.set_precision(1)
 
+    
+    ### 평점
+    st.markdown("<h2 style='text-align: center; color: yellow; '>평점</h2>", unsafe_allow_html=True)
+    Real_grade()
+    Predict_grade()
+    ###
 
     #전체 댓글
-    st.info("전체 리뷰(개수 : %s)" %len(sheet))
-
+    st.info("전체 리뷰(개수 : %s)" % len(sheet))
+    
     # 데이터 프레임 출력
     st.success("긍정 리뷰(개수 : %s)" % len(pd_contain))
     st.table(pos_result)
@@ -425,6 +513,7 @@ def Naver_Shopping_Analysis():
     
     st.warning("중립 리뷰(개수 : %s)" % len(pd_contain3))
     st.table(neu_result)
+    
 
     st.info("")
     # 원형 차트 출력 
@@ -449,6 +538,35 @@ def streamlit_title():
     lottie_url_title = "https://assets1.lottiefiles.com/packages/lf20_5ngs2ksb.json"
     lottie_title = load_lottieurl(lottie_url_title)
     st_lottie(lottie_title, key="title", height=400)
+
+
+################################################################### 평점 별 CSS
+def streamlit_1star():
+    lottie_url_1star = "https://assets3.lottiefiles.com/private_files/lf30_gjwkgweu.json"
+    lottie_1star = load_lottieurl(lottie_url_1star)
+    st_lottie(lottie_1star, key="1star", height=300)
+
+def streamlit_2star():
+    lottie_url_2star = "https://assets3.lottiefiles.com/private_files/lf30_liff4pv6.json"
+    lottie_2star = load_lottieurl(lottie_url_2star)
+    st_lottie(lottie_2star, key="2star", height=300)
+
+def streamlit_3star():
+    lottie_url_3star = "https://assets3.lottiefiles.com/private_files/lf30_15cotjfi.json"
+    lottie_3star = load_lottieurl(lottie_url_3star)
+    st_lottie(lottie_3star, key="3star", height=300)
+
+def streamlit_4star():
+    lottie_url_4star = "https://assets3.lottiefiles.com/private_files/lf30_r3usrsoq.json"
+    lottie_4star = load_lottieurl(lottie_url_4star)
+    st_lottie(lottie_4star, key="4star", height=300)
+
+def streamlit_5star():
+    lottie_url_5star = "https://assets3.lottiefiles.com/private_files/lf30_fnh9mbud.json"
+    lottie_5star = load_lottieurl(lottie_url_5star)
+    st_lottie(lottie_5star, key="5star", height=300)
+
+###################################################################
 
 ################################################################크롤링 검색시 사용
 lottie_url_search = "https://assets1.lottiefiles.com/packages/lf20_7cdnmkzr.json"
