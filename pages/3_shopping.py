@@ -586,9 +586,10 @@ st.markdown("<h3 style='text-align: center; '>쇼핑 평점 분석</h3>", unsafe
 
 
 # 주소 입력
-with st.form('main', clear_on_submit=True):
+with st.form('sub', clear_on_submit=True):
     input_url = st.text_input(label="URL", value="")
     url=input_url
+    print(url)
     st.form_submit_button('분석')
 
 
