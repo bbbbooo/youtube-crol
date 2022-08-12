@@ -54,9 +54,10 @@ def num_re():
             return str 
     return str
 
+# 나중에 볼 동영상
 def zuso():
     try:
-        my_url = "".join((url, 's'))
+        my_url = "".join((my_str2, 's'))
         m_str =  my_url.replace("https://www.youtube.com/watch?v=","")
         for i in range(1000000):
             if m_str.find("&list=WL&index="):
