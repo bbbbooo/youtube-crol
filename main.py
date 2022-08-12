@@ -56,14 +56,13 @@ def num_re():
 
 # 나중에 볼 동영상
 def zuso():
-    try:
+    if my_str2.find("&list=WL&index=") != -1:
         my_url = "".join((my_str2, 's'))
         m_str =  my_url.replace("https://www.youtube.com/watch?v=","")
         for i in range(1000000):
-            if m_str.find("&list=WL&index="):
                 dele = "&list=WL&index=%ss" % i
                 dele_str = m_str.replace(dele, "")
-
+                
                 # find 결과가 false면 -1 리턴. 변환 후엔 당연히 false가 반환
                 if dele_str.find("&list=WL&index=")== -1:
                     return dele_str
@@ -71,14 +70,30 @@ def zuso():
                     # 쓰레기 값. if문을 쓰기 위함
                     a=1
         return dele_str
-    except Exception as e:
-        print('오류')
-        print(e)
+    else:
+        print("나중에 볼 영상 : {}\n".format(my_str2))
+        return my_str2
+        
+# 좋아요 표시한 동영상
+def like(): 
+        if my_str2.find("&list=LL&index=") != -1:
+            mys_url = "".join((my_str2, 's'))
+            lim_str =  mys_url.replace("https://www.youtube.com/watch?v=","")
+            for i in range(1000000):
+                    like_del = "&list=LL&index=%ss" % i
+                    like_str = lim_str.replace(like_del, "")
 
-
-  
-
-
+                    # find 결과가 false면 -1 리턴. 변환 후엔 당연히 false가 반환
+                    if like_str.find("&list=LL&index=")== -1:
+                        return like_str
+                    else:
+                        # 쓰레기 값. if문을 쓰기 위함
+                        a=1
+            return like_str
+        else:
+            print(my_str2)
+            return my_str2
+        
 #썸네일 출력
 def get_thumbnail(url):
     id = url
@@ -594,4 +609,5 @@ if st.form_submit_button and my_str:
         time.sleep(2)
     my_str2 = num_re()
     my_str2 = zuso()
+    my_str2 = like()
     Youtube_Comments_Analysis()
