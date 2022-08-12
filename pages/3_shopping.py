@@ -128,7 +128,7 @@ def Shopping():
             while True:
                 j=1
                 print ("페이지", page ,"\n") 
-                sleep(0.2)
+                sleep(0.4)
                 while True: #한페이지에 20개의 리뷰, 마지막 리뷰에서 error발생
                     try:
                         star=d.find_element_by_xpath('%s/ul/li[1]/div[1]/span[1]' %all_shoppingmall_review).text
@@ -143,7 +143,7 @@ def Shopping():
                         cnt+=1 
                     except: break
 
-                sleep(0.2)
+                sleep(0.4)
 
                 if page<10:#page10
                     try: #리뷰의 마지막 페이지에서 error발생
@@ -383,23 +383,23 @@ def Predict_grade():
     int_stars = int(stars)
     
     if int_stars == 5:
-        streamlit_5star()
+        predict_5star()
         st.info("예측 평점 : %.1f" % stars)
         
     elif 4 <= int_stars < 5:
-        streamlit_4star()
+        predict_4star()
         st.info("예측 평점 : %.1f" % stars)
         
     elif 3 <= int_stars < 4:
-        streamlit_3star()
+        predict_3star()
         st.info("예측 평점 : %.1f" % stars)
         
     elif 2 <= int_stars < 3:
-        streamlit_2star()
+        predict_2star()
         st.info("예측 평점 : %.1f" % stars)
         
     elif 1 <= int_stars < 2:
-        streamlit_1star()
+        predict_1star()
         st.info("예측 평점 : %.1f" % stars)
         
     else:
@@ -500,6 +500,11 @@ def Naver_Shopping_Analysis():
     Real_grade()
     Predict_grade()
     ###
+    
+    st.info("")
+    # 원형 차트 출력 
+    st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
+    Create_plot()
 
     #전체 댓글
     st.info("전체 리뷰(개수 : %s)" % len(sheet))
@@ -515,10 +520,7 @@ def Naver_Shopping_Analysis():
     st.table(neu_result)
     
 
-    st.info("")
-    # 원형 차트 출력 
-    st.markdown("<h3 style='text-align: center; color: green; '>원형 차트</h3>", unsafe_allow_html=True)
-    Create_plot()
+
 
     st.info("")
     # 워드 클라우드 출력
@@ -541,30 +543,61 @@ def streamlit_title():
 
 
 ################################################################### 평점 별 CSS
-def streamlit_1star():
+def streamlit_1star(): 
     lottie_url_1star = "https://assets3.lottiefiles.com/private_files/lf30_gjwkgweu.json"
     lottie_1star = load_lottieurl(lottie_url_1star)
-    st_lottie(lottie_1star, key="1star", height=300)
-
-def streamlit_2star():
+    st_lottie(lottie_1star, key="1stars", height=300)
+    
+    
+def streamlit_2star():  
     lottie_url_2star = "https://assets3.lottiefiles.com/private_files/lf30_liff4pv6.json"
     lottie_2star = load_lottieurl(lottie_url_2star)
-    st_lottie(lottie_2star, key="2star", height=300)
+    st_lottie(lottie_2star, key="2stars", height=300)
 
 def streamlit_3star():
     lottie_url_3star = "https://assets3.lottiefiles.com/private_files/lf30_15cotjfi.json"
     lottie_3star = load_lottieurl(lottie_url_3star)
+    st_lottie(lottie_3star, key="3stars", height=300)
+
+def streamlit_4star(): 
+    lottie_url_4star = "https://assets3.lottiefiles.com/private_files/lf30_r3usrsoq.json"
+    lottie_4star = load_lottieurl(lottie_url_4star)
+    st_lottie(lottie_4star, key="4stars", height=300)
+
+def streamlit_5star(): 
+    lottie_url_5star = "https://assets3.lottiefiles.com/private_files/lf30_fnh9mbud.json"
+    lottie_5star = load_lottieurl(lottie_url_5star)
+    st_lottie(lottie_5star, key="5stars", height=300)
+
+
+########### 예측 평점 ###########
+
+def predict_1star(): 
+    lottie_url_1star = "https://assets3.lottiefiles.com/private_files/lf30_gjwkgweu.json"
+    lottie_1star = load_lottieurl(lottie_url_1star)
+    st_lottie(lottie_1star, key="1star", height=300)
+    
+    
+def predict_2star():  
+    lottie_url_2star = "https://assets3.lottiefiles.com/private_files/lf30_liff4pv6.json"
+    lottie_2star = load_lottieurl(lottie_url_2star)
+    st_lottie(lottie_2star, key="2star", height=300)
+
+def predict_3star():
+    lottie_url_3star = "https://assets3.lottiefiles.com/private_files/lf30_15cotjfi.json"
+    lottie_3star = load_lottieurl(lottie_url_3star)
     st_lottie(lottie_3star, key="3star", height=300)
 
-def streamlit_4star():
+def predict_4star(): 
     lottie_url_4star = "https://assets3.lottiefiles.com/private_files/lf30_r3usrsoq.json"
     lottie_4star = load_lottieurl(lottie_url_4star)
     st_lottie(lottie_4star, key="4star", height=300)
 
-def streamlit_5star():
+def predict_5star(): 
     lottie_url_5star = "https://assets3.lottiefiles.com/private_files/lf30_fnh9mbud.json"
     lottie_5star = load_lottieurl(lottie_url_5star)
     st_lottie(lottie_5star, key="5star", height=300)
+    
 
 ###################################################################
 

@@ -53,6 +53,7 @@ stopwords = ['은','는','이','가','하','아','것','들','의','있','되','
 
 okt = Okt()
 
+
 X_train = []
 for sentence in tqdm(train_data['document']):
     tokenized_sentence = okt.morphs(sentence, stem=True) # 토큰화
@@ -140,10 +141,9 @@ else:
     
     es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=3)
     mc = ModelCheckpoint(PATH + 'best_model.h5', monitor='val_acc', mode='max', verbose=1, save_best_only=True)
-    rp = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=3, verbose=1, mode='min', min_lr= 1e-6)
     
     model.compile(optimizer='rmsprop', loss='binary_crossentropy', metrics=['acc'])
-    model.fit(X_train, y_train, epochs=15, callbacks=[es,mc,rp], batch_size=256, validation_split=0.2)
+    model.fit(X_train, y_train, epochs=15, callbacks=[es,mc], batch_size=256, validation_split=0.2)
 
     
     

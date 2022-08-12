@@ -602,9 +602,9 @@ if option == 'Upload':
 
 
 if option == 'Text':
-    with st.form('form', clear_on_submit=True):
+    with st.form('text', clear_on_submit=True):
         st.success("아래에 내용을 입력해주세요")
         user_input = st.text_input('')
-        st.form_submit_button('전송')
-        Analysis(0)
+        if st.form_submit_button('전송'):
+            Analysis(0)
 

@@ -53,6 +53,28 @@ def num_re():
             # 시간 안적혀 있으면 그대로 리턴
             return str 
     return str
+
+def zuso():
+    try:
+        my_url = "".join((url, 's'))
+        m_str =  my_url.replace("https://www.youtube.com/watch?v=","")
+        for i in range(1000000):
+            if m_str.find("&list=WL&index="):
+                dele = "&list=WL&index=%ss" % i
+                dele_str = m_str.replace(dele, "")
+
+                # find 결과가 false면 -1 리턴. 변환 후엔 당연히 false가 반환
+                if dele_str.find("&list=WL&index=")== -1:
+                    return dele_str
+                else:
+                    # 쓰레기 값. if문을 쓰기 위함
+                    a=1
+        return dele_str
+    except Exception as e:
+        print('오류')
+        print(e)
+
+
   
 
 
@@ -539,15 +561,16 @@ def streamlit_title():
     lottie_url_title = "https://assets1.lottiefiles.com/packages/lf20_xtuje6sh.json"
     lottie_title = load_lottieurl(lottie_url_title)
     st_lottie(lottie_title, key="title", height=300)
-
+    
 ################################################################크롤링 검색시 사용
+
 lottie_url_search = "https://assets1.lottiefiles.com/packages/lf20_7cdnmkzr.json"
 lottie_search = load_lottieurl(lottie_url_search)
 
 ################################################################분석시 사용
+
 lottie_url_analysis = "https://assets1.lottiefiles.com/datafiles/XvkAoqzOt84tzDQ/data.json"
 lottie_analysis = load_lottieurl(lottie_url_analysis)
-
 
 ###################################################################
 
@@ -569,4 +592,5 @@ if st.form_submit_button and my_str:
     with st_lottie_spinner(lottie_search, key="search", height=300):
         time.sleep(2)
     my_str2 = num_re()
+    my_str2 = zuso()
     Youtube_Comments_Analysis()
